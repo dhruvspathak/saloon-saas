@@ -1,4 +1,5 @@
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 import Navigation from '@/components/Navigation';
 import HeroSection from '@/components/HeroSection';
 import AboutSection from '@/components/AboutSection';
@@ -12,10 +13,49 @@ import BeforeAfterGallery from '@/components/BeforeAfterGallery';
 import GoogleReviewsWidget from '@/components/GoogleReviewsWidget';
 import Footer from '@/components/Footer';
 
-import { loadDefaultSalonConfig } from '@/lib/loadSalonConfig';
+import { loadSalonConfig, listAvailableSalons } from '@/lib/loadSalonConfig';
 import { fetchGoogleReviews } from '@/services/googleReviews';
 
-export default function Home({ config, googleData }) {
+/**
+ * Dynamic Salon Page
+ * Renders a multi-tenant salon page based on slug parameter
+ * URL: /salon/[slug]
+ *
+ * Example: /salon/cinderella
+ */
+export default function SalonPage({ config, googleData }) {
+  const router = useRouter();
+
+  // Handle loading state
+  if (router.isFallback) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h1 className="text-2xl font-serif font-bold text-gray-900 mb-4">Loading...</h1>
+          <p className="text-gray-600">Loading salon information</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle 404
+  if (!config) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h1 className="text-4xl font-serif font-bold text-gray-900 mb-4">404</h1>
+          <p className="text-gray-600 text-lg mb-8">Salon not found</p>
+          <a
+            href="/"
+            className="inline-block bg-rose-gold hover:bg-rose-gold-dark text-white px-6 py-3 rounded-lg font-sans font-bold transition-colors"
+          >
+            ← Back Home
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   const { salon } = config;
 
   return (
@@ -34,6 +74,7 @@ export default function Home({ config, googleData }) {
         <meta property="og:description" content={salon.meta.description} />
         <meta property="og:image" content={salon.meta.ogImage} />
         <meta property="og:site_name" content={salon.name} />
+        <meta property="og:url" content={`${typeof window !== 'undefined' ? window.location.origin : ''}/salon/${salon.slug}`} />
 
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
@@ -51,6 +92,9 @@ export default function Home({ config, googleData }) {
 
         {/* Favicon */}
         <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75' fill='%23B76E79'>✨</text></svg>" />
+
+        {/* Canonical URL */}
+        <link rel="canonical" href={`${typeof window !== 'undefined' ? window.location.origin : ''}/salon/${salon.slug}`} />
 
         {/* JSON-LD Structured Data */}
         <script
@@ -72,8 +116,8 @@ export default function Home({ config, googleData }) {
               url: typeof window !== 'undefined' ? window.location.href : '',
               aggregateRating: {
                 '@type': 'AggregateRating',
-                ratingValue: '4.8',
-                ratingCount: salon.reviews.length,
+                ratingValue: googleData?.rating ? googleData.rating.toFixed(1) : '4.8',
+                ratingCount: googleData?.totalRatings || salon.reviews?.length || 10,
               },
             }),
           }}
@@ -126,35 +170,71 @@ export default function Home({ config, googleData }) {
 }
 
 /**
- * getStaticProps - Server-side data fetching with ISR
- * Fetches Google reviews data with 1-hour revalidation
- * Loads default salon configuration (backward compatible)
+ * getStaticPaths - Generate static paths for all available salons
+ * This enables static generation for all salon routes
  */
-export async function getStaticProps() {
-  let config = null;
-  let googleData = null;
-
+export async function getStaticPaths() {
   try {
-    // Load default salon configuration
-    config = loadDefaultSalonConfig();
+    // Get list of all available salon slugs
+    const slugs = listAvailableSalons();
 
-    // If config not found, return notFound
+    // Generate paths for each salon
+    const paths = slugs.map((slug) => ({
+      params: { slug },
+    }));
+
+    return {
+      paths,
+      fallback: 'blocking', // Use blocking mode to generate at request time if not pregenerated
+    };
+  } catch (error) {
+    console.error('Error in getStaticPaths:', error);
+    return {
+      paths: [],
+      fallback: 'blocking',
+    };
+  }
+}
+
+/**
+ * getStaticProps - Fetch salon config and Google reviews
+ * Regenerates every hour (3600 seconds)
+ */
+export async function getStaticProps({ params }) {
+  try {
+    const { slug } = params;
+
+    // Load salon configuration
+    const config = loadSalonConfig(slug);
+
+    // If salon config not found, return 404
     if (!config) {
       return {
         notFound: true,
-        revalidate: 3600,
+        revalidate: 3600, // Retry every hour
       };
     }
+
+    let googleData = null;
 
     // Fetch Google reviews if placeId is configured
     if (config.google?.placeId) {
       try {
         googleData = await fetchGoogleReviews(config.google.placeId);
       } catch (error) {
-        console.warn('Error fetching Google reviews:', error);
+        console.warn(`Error fetching Google reviews for salon ${slug}:`, error);
         // Continue without Google data - it's optional
       }
     }
+
+    return {
+      props: {
+        config,
+        googleData: googleData || null,
+      },
+      // Revalidate every 1 hour (3600 seconds)
+      revalidate: 3600,
+    };
   } catch (error) {
     console.error('Error in getStaticProps:', error);
     return {
@@ -162,13 +242,4 @@ export async function getStaticProps() {
       revalidate: 3600,
     };
   }
-
-  return {
-    props: {
-      config,
-      googleData: googleData || null,
-    },
-    // Revalidate every 1 hour (3600 seconds)
-    revalidate: 3600,
-  };
 }
