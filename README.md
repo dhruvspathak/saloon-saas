@@ -1,20 +1,33 @@
 # Salon SaaS - Production Ready MVP
 
-A modern, fully responsive beauty salon website template built with Next.js 14, React 18, and TailwindCSS.
+A modern, fully responsive beauty salon website template with **backend-capable features** for lead management and Google reviews integration.
 
-## 🎨 Features
+## ✨ Features
 
-- ✨ **Configuration-Driven**: Change only `config/salon.json` to launch new salons
+### Frontend
 - 📱 **Fully Responsive**: Mobile-first design for all devices
 - 🎨 **Luxurious Design**: Rose gold & modern aesthetic
 - ⚡ **High Performance**: 90+ Lighthouse score
 - 🔍 **SEO Optimized**: Meta tags, JSON-LD structured data, Open Graph
 - 🖼️ **Gallery with Lightbox**: Professional image showcase
+- 🎥 **Before/After Gallery**: Interactive slider for transformations
 - 📞 **Multi-Channel Booking**: WhatsApp, Call, and Form booking
 - 🗺️ **Location Integration**: Google Maps embedded
 - ⭐ **Reviews Section**: Client testimonials with ratings
 - 🎯 **Smart CTAs**: Floating WhatsApp button, sticky navigation
-- 📊 **Analytics Ready**: JSON-LD for rich snippets
+
+### Backend & Integrations (NEW!)
+- 🔗 **Google Reviews Integration**: Fetch and display Google ratings & reviews (with ISR caching)
+- 📊 **Lead Database**: Supabase Postgres with secure lead storage
+- 💾 **Lead Management**: Track all booking inquiries automatically
+- 🛡️ **Phone Validation**: Indian phone number validation & sanitization
+- 📧 **Notifications Ready**: Prepared for WhatsApp, Email, SMS (future)
+- 🏢 **Multi-Tenant Ready**: Designed for SaaS scaling
+
+### Configuration
+- ✨ **Configuration-Driven**: Change only `config/salon.json` to launch new salons
+- 🚀 **Easy Multi-Tenancy**: Support for multiple salon configurations
+- 📝 **JSON-Based Config**: No database setup needed for basic usage
 
 ## 🚀 Quick Start
 
@@ -36,18 +49,101 @@ npm start
 
 Visit `http://localhost:3000`
 
+### Setup Backend Services (Optional but Recommended)
+
+For full feature set, configure:
+
+1. **Supabase** (for lead database)
+2. **Google Places API** (for reviews integration)
+
+See [ENV_SETUP.md](ENV_SETUP.md) for detailed setup instructions.
+
 ### Create New Salon
 
 1. Edit `config/salon.json`
 2. Update all fields (name, services, gallery, etc.)
-3. Save and refresh
-4. Deploy to Vercel
+3. Add Google `placeId` (optional, for reviews display)
+4. Add `transformations` for before/after gallery (optional)
+5. Save and refresh
+6. Deploy to Vercel
 
-## 📋 Configuration
+## � Get Started with Visitor Analytics
+
+To start counting visitors and page views, follow these steps:
+
+### 1. Install Analytics Package
+
+The `@vercel/analytics` package is already installed in your project.
+
+### 2. Analytics Component Added
+
+The `<Analytics/>` React component has been added to your app's layout (`pages/_app.jsx`). It automatically starts collecting page views when you deploy.
+
+```jsx
+import { Analytics } from "@vercel/analytics/next"
+
+function MyApp({ Component, pageProps }) {
+  return (
+    <>
+      <Component {...pageProps} />
+      <Analytics />
+    </>
+  );
+}
+```
+
+### 3. Deploy & Visit Your Site
+
+Deploy your changes to Vercel, then visit your deployment to start collecting page view data.
+
+```bash
+# Push to your repository
+git add .
+git commit -m "Add Vercel Analytics integration"
+git push origin main
+
+# Deploy on Vercel (automatic on push)
+# Visit your deployment URL
+```
+
+### 4. View Your Analytics
+
+- If you don't see data after 30 seconds, please check for content blockers and try navigating between pages on your site
+- Visit your Vercel project dashboard to view real-time analytics and visitor statistics
+- For full documentation, refer to [Vercel Analytics docs](https://vercel.com/docs/analytics)
+
+## �📋 Configuration
+
+### Minimal Config
+```json
+{
+  "salon": {
+    "id": "my-salon",
+    "name": "My Beauty Salon",
+    "tagline": "Your tagline",
+    ...
+  }
+}
+```
+
+### Full Config with Backend Features
+```json
+{
+  "salon": { ... },
+  "google": {
+    "placeId": "ChIJ1b1-KKb64zoRTYlIx-dI1xk"
+  },
+  "transformations": [
+    {
+      "title": "Keratin Treatment",
+      "before": "url-to-before.jpg",
+      "after": "url-to-after.jpg"
+    }
+  ]
+}
+```
 
 See [CONFIG_GUIDE.md](CONFIG_GUIDE.md) for detailed configuration options.
-
-### Minimal Config Example
 
 ```json
 {
@@ -222,7 +318,114 @@ Edit Google Fonts link in `pages/index.jsx`
 ### Add Google Analytics
 Uncomment GA code in `pages/_document.jsx`
 
-## 📝 Best Practices
+## � Backend Features
+
+### Google Reviews Integration
+
+Automatically fetch and display Google ratings and reviews on your website.
+
+**Setup:**
+1. Get your salon's Google Place ID (see [ENV_SETUP.md](ENV_SETUP.md))
+2. Add to `config/salon.json`:
+   ```json
+   {
+     "google": {
+       "placeId": "ChIJ..."
+     }
+   }
+   ```
+3. Set `NEXT_PUBLIC_GOOGLE_PLACES_API_KEY` environment variable
+
+**Features:**
+- ✅ Displays average rating and review count
+- ✅ Shows top 5 reviews with author info
+- ✅ ISR caching (1-hour revalidation)
+- ✅ Link to Google Maps page
+
+### Lead Database
+
+All bookings are automatically saved to Supabase database.
+
+**Setup:**
+1. Create Supabase project (see [ENV_SETUP.md](ENV_SETUP.md))
+2. Set environment variables:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+
+**Features:**
+- ✅ Secure lead storage with validation
+- ✅ Phone number validation & sanitization
+- ✅ Timestamps for follow-up tracking
+- ✅ Dashboard-ready structure
+
+### Before/After Transformation Gallery
+
+Interactive slider showcasing service transformations.
+
+**Setup:**
+1. Add to `config/salon.json`:
+   ```json
+   {
+     "transformations": [
+       {
+         "title": "Service Name",
+         "before": "url-to-before-image",
+         "after": "url-to-after-image"
+       }
+     ]
+   }
+   ```
+
+**Features:**
+- ✅ Interactive before/after slider
+- ✅ Service-specific galleries
+- ✅ Lazy loading images
+- ✅ Mobile-friendly
+
+## 📚 Documentation
+
+- [CONFIG_GUIDE.md](CONFIG_GUIDE.md) - Detailed configuration options
+- [ENV_SETUP.md](ENV_SETUP.md) - Backend services setup (Supabase, Google Places API)
+- [DEPLOYMENT.md](DEPLOYMENT.md) - Deploy to Vercel
+- [ARCHITECTURE.md](ARCHITECTURE.md) - System architecture and future roadmap
+- [QUICK_START.md](QUICK_START.md) - Quick start guide
+
+## 🚀 API Endpoints
+
+### POST /api/lead
+
+Submit a booking lead.
+
+**Request:**
+```json
+{
+  "salonId": "cinderella-andheri",
+  "name": "Customer Name",
+  "phone": "+91-98765-43210",
+  "service": "Keratin Treatment",
+  "preferredDate": "2026-03-20",
+  "message": "Optional message"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "leadId": "uuid...",
+  "message": "Lead saved successfully"
+}
+```
+
+## 🏢 Multi-Tenant Ready
+
+The system is designed for future multi-tenant scaling:
+- ✅ Salon ID isolation in database
+- ✅ Config-based multi-salon setup
+- ✅ Prepared for dynamic routing: `/salon/[slug]`
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for details.
 
 1. **Keep config organized** - Use clear section names
 2. **Optimize images** - Use 1920x1080 for hero, 500x500 for gallery
