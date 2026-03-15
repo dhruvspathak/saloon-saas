@@ -230,9 +230,6 @@ export async function getStaticProps() {
     const salons = Object.entries(allConfigs).map(([slug, config]) => ({
       slug,
       ...config.salon,
-      hero: config.hero,
-      services: config.services,
-      location: config.location,
       google: config.google,
     }));
 
