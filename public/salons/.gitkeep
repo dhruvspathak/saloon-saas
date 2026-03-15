@@ -1,0 +1,19 @@
+# Salon-specific images directory
+# 
+# Structure:
+# public/salons/cinderella/
+# public/salons/glamstudio/
+# public/salons/rosebeauty/
+#
+# Each salon directory can contain:
+# - gallery1.jpg, gallery2.jpg, etc.
+# - before1.jpg, after1.jpg (transformations)
+# - hero.jpg (optional hero background)
+#
+# Images can be referenced in config as:
+# {
+#   "image": "/salons/cinderella/gallery1.jpg"
+# }
+#
+# This structure enables storing salon-specific images
+# while maintaining a single deployment.

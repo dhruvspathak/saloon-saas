@@ -1,0 +1,154 @@
+{
+  "salon": {
+    "id": "cinderella",
+    "slug": "cinderella",
+    "name": "Cinderella Sharon's Rose Beauty Salon",
+    "tagline": "Elegance, Grace & Timeless Beauty",
+    "description": "Your destination for premium beauty and wellness services in Andheri East.",
+    "location": {
+      "address": "123 Fashion Street, Andheri East, Mumbai, 400069",
+      "phone": "+91 98765 43210",
+      "email": "hello@cinderellasharons.com",
+      "whatsapp": "+91 98765 43210",
+      "googleMapEmbed": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3768.4673254473973!2d72.8479!3d19.1136!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be7b7c1d1d1d1d1%3A0x1d1d1d1d1d1d1d1d!2sAndheri%20East!5e0!3m2!1sen!2sin!4v1234567890",
+      "openingHours": {
+        "monday": "10:00 AM - 8:00 PM",
+        "tuesday": "10:00 AM - 8:00 PM",
+        "wednesday": "10:00 AM - 8:00 PM",
+        "thursday": "10:00 AM - 8:00 PM",
+        "friday": "10:00 AM - 9:00 PM",
+        "saturday": "10:00 AM - 9:00 PM",
+        "sunday": "12:00 PM - 8:00 PM"
+      }
+    },
+    "hero": {
+      "backgroundImage": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQr2G71MIqWCye_3i1sWJlYx2YXvYvdQpB8EQ&s",
+      "overlayOpacity": 0.4
+    },
+    "about": {
+      "headline": "About Cinderella Sharon's",
+      "description": "Since 2015, we've been dedicated to transforming beauty routines into luxurious self-care rituals. Our team of certified beauty experts is passionate about bringing out the best version of you.",
+      "yearsInBusiness": 9,
+      "clientsSatisfied": "5000+",
+      "highlights": [
+        {
+          "icon": "🎯",
+          "title": "Expert Stylists",
+          "description": "Highly trained professionals with international certifications"
+        },
+        {
+          "icon": "💎",
+          "title": "Premium Products",
+          "description": "We use only the finest, salon-grade beauty products"
+        },
+        {
+          "icon": "✨",
+          "title": "Luxury Experience",
+          "description": "Every detail designed for your comfort and relaxation"
+        }
+      ]
+    },
+    "services": [
+      {
+        "id": 1,
+        "name": "Keratin Treatment",
+        "description": "Smoothen and strengthen your hair with our advanced keratin infusion therapy.",
+        "price": "₹3,500",
+        "duration": "2 hours",
+        "icon": "💇‍♀️",
+        "category": "Hair Care"
+      },
+      {
+        "id": 2,
+        "name": "Hair Smoothening",
+        "description": "Get permanently smooth, frizz-free hair with our exclusive smoothening process.",
+        "price": "₹2,500",
+        "duration": "3 hours",
+        "icon": "🪮",
+        "category": "Hair Care"
+      },
+      {
+        "id": 3,
+        "name": "Hair Coloring",
+        "description": "Professional hair coloring with the latest global trends. Ammonia-free options available.",
+        "price": "₹1,500 - ₹4,000",
+        "duration": "2-3 hours",
+        "icon": "🎨",
+        "category": "Hair Care"
+      },
+      {
+        "id": 4,
+        "name": "Bridal Makeup",
+        "description": "Make your special day even more special with our premium bridal makeup service.",
+        "price": "₹5,000 - ₹8,000",
+        "duration": "2-3 hours",
+        "icon": "💄",
+        "category": "Makeup"
+      },
+      {
+        "id": 5,
+        "name": "Facial Treatments",
+        "description": "Rejuvenating facials tailored to your skin type for a radiant glow.",
+        "price": "₹1,000 - ₹3,000",
+        "duration": "1 hour",
+        "icon": "✨",
+        "category": "Skincare"
+      }
+    ],
+    "offers": [
+      {
+        "id": 1,
+        "title": "Spring Hair Special",
+        "description": "Get any hair service with 20% discount. Limited time offer!",
+        "discount": "20% OFF",
+        "validTill": "March 31, 2026",
+        "code": "SPRING20",
+        "backgroundColor": "gradient-rose"
+      }
+    ],
+    "gallery": [
+      {
+        "id": 1,
+        "image": "https://images.pexels.com/photos/3945683/pexels-photo-3945683.jpeg?w=500&h=500&fit=crop",
+        "title": "Hair Transformation 1",
+        "category": "Hair"
+      },
+      {
+        "id": 2,
+        "image": "https://images.pexels.com/photos/3807517/pexels-photo-3807517.jpeg?w=500&h=500&fit=crop",
+        "title": "Bridal Makeup Look",
+        "category": "Makeup"
+      }
+    ],
+    "reviews": [
+      {
+        "id": 1,
+        "name": "Priya Sharma",
+        "rating": 5,
+        "review": "Absolutely love the services! The keratin treatment has changed my hair completely.",
+        "date": "2026-02-15",
+        "service": "Keratin Treatment"
+      }
+    ],
+    "socialLinks": {
+      "instagram": "https://instagram.com/cinderellasharons",
+      "facebook": "https://facebook.com/cinderellasharons"
+    },
+    "meta": {
+      "title": "Cinderella Sharon's Rose Beauty Salon | Premium Hair & Makeup Services",
+      "description": "Experience luxury beauty services at Cinderella Sharon's in Andheri East, Mumbai.",
+      "keywords": "beauty salon, hair treatment, bridal makeup, keratin, hair color, Mumbai",
+      "ogImage": "https://images.pexels.com/photos/3945683/pexels-photo-3945683.jpeg?w=1200&h=630&fit=crop"
+    }
+  },
+  "google": {
+    "placeId": "ChIJ1b1-KKb64zoRTYlIx-dI1xk"
+  },
+  "transformations": [
+    {
+      "title": "Keratin Treatment",
+      "before": "https://images.pexels.com/photos/3945683/pexels-photo-3945683.jpeg?w=800&h=800&fit=crop",
+      "after": "https://images.pexels.com/photos/3807520/pexels-photo-3807520.jpeg?w=800&h=800&fit=crop"
+    }
+  ]
+}
