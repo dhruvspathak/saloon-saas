@@ -1,4 +1,5 @@
 import Head from 'next/head';
+import Link from 'next/link';
 import { useRouter } from 'next/router';
 import Navigation from '@/components/Navigation';
 import HeroSection from '@/components/HeroSection';
@@ -45,12 +46,12 @@ export default function SalonPage({ config, googleData }) {
         <div className="text-center">
           <h1 className="text-4xl font-serif font-bold text-gray-900 mb-4">404</h1>
           <p className="text-gray-600 text-lg mb-8">Salon not found</p>
-          <a
+          <Link
             href="/"
             className="inline-block bg-rose-gold hover:bg-rose-gold-dark text-white px-6 py-3 rounded-lg font-sans font-bold transition-colors"
           >
             ← Back Home
-          </a>
+          </Link>
         </div>
       </div>
     );
