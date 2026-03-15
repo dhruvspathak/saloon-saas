@@ -5,6 +5,7 @@ import { useState } from 'react';
 export default function BookingSection({ config }) {
   const { salon } = config;
   const { services, location } = salon;
+  const salonId = config.salon?.id || 'default';
 
   const [formData, setFormData] = useState({
     name: '',
@@ -15,6 +16,8 @@ export default function BookingSection({ config }) {
   });
 
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -22,32 +25,66 @@ export default function BookingSection({ config }) {
       ...prev,
       [name]: value,
     }));
+    setError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+    setError('');
 
-    // WhatsApp message
-    const whatsappMessage = `Hi, I'd like to book an appointment at ${salon.name}.\n\nDetails:\nName: ${formData.name}\nPhone: ${formData.phone}\nService: ${formData.service}\nPreferred Date: ${formData.date}\n\nMessage: ${formData.message || 'No additional message'}`;
-
-    const whatsappUrl = `https://wa.me/${location.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(
-      whatsappMessage
-    )}`;
-
-    window.open(whatsappUrl, '_blank');
-    setSubmitted(true);
-
-    // Reset form
-    setTimeout(() => {
-      setFormData({
-        name: '',
-        phone: '',
-        service: '',
-        date: '',
-        message: '',
+    try {
+      // Submit lead to database
+      const response = await fetch('/api/lead', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          salonId: salonId,
+          name: formData.name,
+          phone: formData.phone,
+          service: formData.service,
+          preferredDate: formData.date,
+          message: formData.message,
+        }),
       });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to submit booking');
+      }
+
+      // Also open WhatsApp after successful database submission
+      const whatsappMessage = `Hi, I've just submitted a booking request at ${salon.name}.\n\nDetails:\nName: ${formData.name}\nService: ${formData.service}\nPreferred Date: ${formData.date}\n\nMessage: ${formData.message || 'No additional message'}`;
+
+      const whatsappUrl = `https://wa.me/${location.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(
+        whatsappMessage
+      )}`;
+
+      window.open(whatsappUrl, '_blank');
+
+      setSubmitted(true);
+
+      // Reset form
+      setTimeout(() => {
+        setFormData({
+          name: '',
+          phone: '',
+          service: '',
+          date: '',
+          message: '',
+        });
+        setSubmitted(false);
+      }, 3000);
+    } catch (err) {
+      console.error('Booking error:', err);
+      setError(err.message || 'An error occurred. Please try again.');
       setSubmitted(false);
-    }, 2000);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -69,7 +106,15 @@ export default function BookingSection({ config }) {
           {submitted && (
             <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
               <p className="text-green-700 font-sans font-semibold">
-                ✓ Thank you! We've received your booking request. We'll contact you shortly on WhatsApp.
+                ✓ Thank you! We've received your booking request. Our team will contact you shortly via WhatsApp.
+              </p>
+            </div>
+          )}
+
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-700 font-sans font-semibold">
+                ❌ {error}
               </p>
             </div>
           )}
@@ -86,7 +131,8 @@ export default function BookingSection({ config }) {
                 value={formData.name}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-gold focus:border-transparent font-sans"
+                disabled={isLoading}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-gold focus:border-transparent font-sans disabled:bg-gray-100"
                 placeholder="Your name"
               />
             </div>
@@ -102,7 +148,8 @@ export default function BookingSection({ config }) {
                 value={formData.phone}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-gold focus:border-transparent font-sans"
+                disabled={isLoading}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-gold focus:border-transparent font-sans disabled:bg-gray-100"
                 placeholder="+91 98765 43210"
               />
             </div>
@@ -117,7 +164,8 @@ export default function BookingSection({ config }) {
                 value={formData.service}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-gold focus:border-transparent font-sans"
+                disabled={isLoading}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-gold focus:border-transparent font-sans disabled:bg-gray-100"
               >
                 <option value="">Choose a service...</option>
                 {services.map((service) => (
@@ -139,7 +187,8 @@ export default function BookingSection({ config }) {
                 value={formData.date}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-gold focus:border-transparent font-sans"
+                disabled={isLoading}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-gold focus:border-transparent font-sans disabled:bg-gray-100"
               />
             </div>
 
@@ -153,7 +202,8 @@ export default function BookingSection({ config }) {
                 value={formData.message}
                 onChange={handleChange}
                 rows="4"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-gold focus:border-transparent font-sans resize-none"
+                disabled={isLoading}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-gold focus:border-transparent font-sans resize-none disabled:bg-gray-100"
                 placeholder="Any special requests or preferences?"
               />
             </div>
@@ -162,9 +212,10 @@ export default function BookingSection({ config }) {
             <div className="flex flex-col sm:flex-row gap-4 pt-6">
               <button
                 type="submit"
-                className="flex-1 bg-rose-gold hover:bg-rose-gold-dark text-white py-4 rounded-lg font-sans font-bold text-lg transition-all duration-300 shadow-elegance"
+                disabled={isLoading}
+                className="flex-1 bg-rose-gold hover:bg-rose-gold-dark text-white py-4 rounded-lg font-sans font-bold text-lg transition-all duration-300 shadow-elegance disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                📞 Book via WhatsApp
+                {isLoading ? '⏳ Processing...' : '📞 Book Now'}
               </button>
               <a
                 href={`tel:${location.phone}`}
@@ -178,8 +229,7 @@ export default function BookingSection({ config }) {
           {/* Additional Info */}
           <div className="mt-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
             <p className="text-gray-700 font-sans text-sm">
-              <strong>💡 Tip:</strong> You can also reach us directly on WhatsApp for instant
-              booking confirmation and to discuss your preferences in detail.
+              <strong>💡 Tip:</strong> Your booking details are securely stored in our system. You'll receive a WhatsApp message from our team to confirm your appointment.
             </p>
           </div>
         </div>

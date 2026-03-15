@@ -1,5 +1,6 @@
 {
   "salon": {
+    "id": "cinderella-andheri",
     "name": "Cinderella Sharon's Rose Beauty Salon",
     "tagline": "Elegance, Grace & Timeless Beauty",
     "description": "Your destination for premium beauty and wellness services. We believe every visit should feel like a luxurious escape.",
@@ -223,5 +224,30 @@
       "keywords": "beauty salon, hair treatment, bridal makeup, keratin, hair color, Mumbai",
       "ogImage": "https://images.pexels.com/photos/3945683/pexels-photo-3945683.jpeg?w=1200&h=630&fit=crop"
     }
-  }
+  },
+  "google": {
+    "placeId": "ChIJ1b1-KKb64zoRTYlIx-dI1xk"
+  },
+  "transformations": [
+    {
+      "title": "Keratin Treatment",
+      "before": "https://images.pexels.com/photos/3945683/pexels-photo-3945683.jpeg?w=800&h=800&fit=crop",
+      "after": "https://images.pexels.com/photos/3807520/pexels-photo-3807520.jpeg?w=800&h=800&fit=crop"
+    },
+    {
+      "title": "Hair Smoothening",
+      "before": "https://images.pexels.com/photos/3807517/pexels-photo-3807517.jpeg?w=800&h=800&fit=crop",
+      "after": "https://images.pexels.com/photos/3873217/pexels-photo-3873217.jpeg?w=800&h=800&fit=crop"
+    },
+    {
+      "title": "Hair Coloring",
+      "before": "https://images.pexels.com/photos/3694804/pexels-photo-3694804.jpeg?w=800&h=800&fit=crop",
+      "after": "https://images.pexels.com/photos/3807521/pexels-photo-3807521.jpeg?w=800&h=800&fit=crop"
+    },
+    {
+      "title": "Bridal Makeup",
+      "before": "https://images.pexels.com/photos/3873218/pexels-photo-3873218.jpeg?w=800&h=800&fit=crop",
+      "after": "https://images.pexels.com/photos/3873219/pexels-photo-3873219.jpeg?w=800&h=800&fit=crop"
+    }
+  ]
 }

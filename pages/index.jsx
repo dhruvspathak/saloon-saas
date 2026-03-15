@@ -8,11 +8,14 @@ import OffersSection from '@/components/OffersSection';
 import ReviewsSection from '@/components/ReviewsSection';
 import LocationSection from '@/components/LocationSection';
 import BookingSection from '@/components/BookingSection';
+import BeforeAfterGallery from '@/components/BeforeAfterGallery';
+import GoogleReviewsWidget from '@/components/GoogleReviewsWidget';
 import Footer from '@/components/Footer';
 
 import config from '@/config/salon.json';
+import { fetchGoogleReviews } from '@/services/googleReviews';
 
-export default function Home() {
+export default function Home({ googleData }) {
   const { salon } = config;
 
   return (
@@ -93,6 +96,16 @@ export default function Home() {
         {/* Gallery Section */}
         <GallerySection config={config} />
 
+        {/* Before/After Transformations */}
+        {config.transformations && config.transformations.length > 0 && (
+          <BeforeAfterGallery transformations={config.transformations} />
+        )}
+
+        {/* Google Reviews Widget */}
+        {googleData && config.google?.placeId && (
+          <GoogleReviewsWidget googleData={googleData} placeId={config.google.placeId} />
+        )}
+
         {/* Offers Section */}
         <OffersSection config={config} />
 
@@ -110,4 +123,30 @@ export default function Home() {
       </main>
     </>
   );
+}
+
+/**
+ * getStaticProps - Server-side data fetching with ISR
+ * Fetches Google reviews data with 1-hour revalidation
+ */
+export async function getStaticProps() {
+  let googleData = null;
+
+  try {
+    // Fetch Google reviews if placeId is configured
+    if (config.google?.placeId) {
+      googleData = await fetchGoogleReviews(config.google.placeId);
+    }
+  } catch (error) {
+    console.error('Error fetching Google reviews in getStaticProps:', error);
+    // Continue without Google data - it's optional
+  }
+
+  return {
+    props: {
+      googleData: googleData || null,
+    },
+    // Revalidate every 1 hour (3600 seconds)
+    revalidate: 3600,
+  };
 }
