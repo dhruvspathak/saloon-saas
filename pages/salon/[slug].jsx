@@ -14,21 +14,27 @@ import BeforeAfterGallery from '@/components/BeforeAfterGallery';
 import GoogleReviewsWidget from '@/components/GoogleReviewsWidget';
 import Footer from '@/components/Footer';
 
-import { loadSalonConfig, listAvailableSalons } from '@/lib/loadSalonConfig';
+import { getSiteConfigBySlug } from '@/services/siteService';
 import { fetchGoogleReviews } from '@/services/googleReviews';
+import { getLayout } from '@/layouts';
+import { getTheme } from '@/themes';
+import { getIndustryModule } from '@/industries';
 
 /**
- * Dynamic Salon Page
- * Renders a multi-tenant salon page based on slug parameter
+ * Backward Compatibility Salon Page
  * URL: /salon/[slug]
- *
- * Example: /salon/cinderella
+ * 
+ * This page maintains backward compatibility with the old salon-specific route.
+ * It loads from the new multi-industry sites table but specifically for salon industry.
+ * All salons are stored in the sites table with industry='salon'.
+ * 
+ * Redirects new users to /site/[slug], but old links still work here.
  */
-export default function SalonPage({ config, googleData }) {
+export default function SalonPage({ config, siteConfig, googleData, layout, theme, industry, isFallback }) {
   const router = useRouter();
 
   // Handle loading state
-  if (router.isFallback) {
+  if (router.isFallback || isFallback) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -40,7 +46,7 @@ export default function SalonPage({ config, googleData }) {
   }
 
   // Handle 404
-  if (!config) {
+  if (!config && !siteConfig) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -48,137 +54,205 @@ export default function SalonPage({ config, googleData }) {
           <p className="text-gray-600 text-lg mb-8">Salon not found</p>
           <Link
             href="/"
-            className="inline-block bg-rose-gold hover:bg-rose-gold-dark text-white px-6 py-3 rounded-lg font-sans font-bold transition-colors"
+            className="inline-block px-6 py-3 bg-rose-gold text-white rounded hover:bg-rose-gold-dark transition"
           >
-            ← Back Home
+            Back to Home
           </Link>
         </div>
       </div>
     );
   }
 
-  const { salon } = config;
+  // Use new siteConfig if available, fallback to old config format
+  const finalConfig = siteConfig?.configData || config || {};
+  const suiteName = finalConfig.salon?.name || siteConfig?.name || 'Salon';
+  const siteSlug = siteConfig?.slug || router.query.slug;
+
+  // Restructure config for components that expect the old format
+  const wrappedConfig = {
+    salon: {
+      name: suiteName,
+      tagline: finalConfig.salon?.tagline || finalConfig.tagline || 'Professional Services',
+      description: finalConfig.salon?.description || finalConfig.description || '',
+      ...finalConfig.salon,
+    },
+    hero: finalConfig.hero || finalConfig.salon?.hero || {},
+    about: finalConfig.about || finalConfig.salon?.about || {},
+    services: finalConfig.services || finalConfig.salon?.services || [],
+    gallery: finalConfig.gallery || finalConfig.salon?.gallery || [],
+    beforeAfter: finalConfig.beforeAfter || finalConfig.salon?.beforeAfter || [],
+    offers: finalConfig.offers || finalConfig.salon?.offers || [],
+    reviews: finalConfig.reviews || finalConfig.salon?.reviews || [],
+    location: finalConfig.location || finalConfig.salon?.location || {},
+    booking: finalConfig.booking || finalConfig.salon?.booking || {},
+    transformations: finalConfig.transformations || finalConfig.salon?.transformations || [],
+    google: finalConfig.google || finalConfig.salon?.google || {},
+  };
+
+  // Apply theme CSS variables
+  const themeCSSVariables = {
+    '--color-primary': theme?.colors?.primary || '#B76E79',
+    '--color-primary-dark': theme?.colors?.primaryDark || '#9B5A63',
+    '--color-primary-light': theme?.colors?.primaryLight || '#D4949D',
+    '--color-secondary': theme?.colors?.secondary || '#F5E6E8',
+    '--color-accent': theme?.colors?.accent || '#D4AF37',
+    '--color-background': theme?.colors?.background || '#FAFAFA',
+    '--color-text': theme?.colors?.text || '#2C2C2C',
+    '--color-text-light': theme?.colors?.textLight || '#666666',
+  };
+
+  /**
+   * Render section component
+   */
+  const renderSection = (sectionName) => {
+    switch (sectionName) {
+      case 'Hero':
+        return <HeroSection key="hero" config={wrappedConfig} suiteName={suiteName} />;
+      case 'About':
+        return <AboutSection key="about" config={wrappedConfig} />;
+      case 'Services':
+        return (
+          <ServicesSection
+            key="services"
+            config={wrappedConfig}
+            terminology={industry?.terminology}
+          />
+        );
+      case 'Gallery':
+        return (
+          <GallerySection key="gallery" config={wrappedConfig} siteSlug={siteSlug} />
+        );
+      case 'BeforeAfter':
+        return (
+          <BeforeAfterGallery
+            key="before-after"
+            config={wrappedConfig}
+            siteSlug={siteSlug}
+          />
+        );
+      case 'Offers':
+        return <OffersSection key="offers" config={wrappedConfig} />;
+      case 'Reviews':
+        return (
+          <ReviewsSection
+            key="reviews"
+            config={wrappedConfig}
+            googleData={googleData}
+          />
+        );
+      case 'Location':
+        return <LocationSection key="location" config={wrappedConfig} />;
+      case 'Booking':
+        return (
+          <BookingSection
+            key="booking"
+            config={wrappedConfig}
+            siteSlug={siteSlug}
+            terminology={industry?.terminology}
+            siteName={suiteName}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
+  // Determine layout to use
+  const sectionsToRender = layout && Array.isArray(layout) ? layout : [
+    'Hero',
+    'About',
+    'Services',
+    'Gallery',
+    'BeforeAfter',
+    'Offers',
+    'Reviews',
+    'Location',
+    'Booking',
+  ];
 
   return (
     <>
       <Head>
-        {/* Meta Tags */}
-        <title>{salon.meta.title}</title>
-        <meta name="description" content={salon.meta.description} />
-        <meta name="keywords" content={salon.meta.keywords} />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="theme-color" content="#B76E79" />
-
-        {/* Open Graph / Social Media */}
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content={salon.meta.title} />
-        <meta property="og:description" content={salon.meta.description} />
-        <meta property="og:image" content={salon.meta.ogImage} />
-        <meta property="og:site_name" content={salon.name} />
-        <meta property="og:url" content={`${typeof window !== 'undefined' ? window.location.origin : ''}/salon/${salon.slug}`} />
-
-        {/* Twitter */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={salon.meta.title} />
-        <meta name="twitter:description" content={salon.meta.description} />
-        <meta name="twitter:image" content={salon.meta.ogImage} />
-
-        {/* Favicon */}
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75' fill='%23B76E79'>✨</text></svg>" />
-
-        {/* Canonical URL */}
-        <link rel="canonical" href={`${typeof window !== 'undefined' ? window.location.origin : ''}/salon/${salon.slug}`} />
-
-        {/* JSON-LD Structured Data */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              '@context': 'https://schema.org',
-              '@type': 'LocalBusiness',
-              name: salon.name,
-              description: salon.description,
-              image: salon.meta.ogImage,
-              address: {
-                '@type': 'PostalAddress',
-                streetAddress: salon.location.address.split(',')[0],
-                addressLocality: salon.location.address.split(',')[1]?.trim() || 'Mumbai',
-                addressCountry: 'IN',
-              },
-              telephone: salon.location.phone,
-              url: typeof window !== 'undefined' ? window.location.href : '',
-              aggregateRating: {
-                '@type': 'AggregateRating',
-                ratingValue: googleData?.rating ? googleData.rating.toFixed(1) : '4.8',
-                ratingCount: googleData?.totalRatings || salon.reviews?.length || 10,
-              },
-            }),
-          }}
+        <title>{suiteName} | Professional Beauty Services</title>
+        <meta
+          name="description"
+          content={wrappedConfig.salon?.description || `Visit ${suiteName}`}
         />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/favicon.ico" />
+        <meta name="canonical" content={`/salon/${siteSlug}`} />
       </Head>
 
-      <main className="w-full">
-        {/* Navigation */}
-        <Navigation config={config} />
+      <div style={themeCSSVariables} className={`theme-${theme?.name || 'luxury'}`}>
+        <Navigation config={wrappedConfig} suiteName={suiteName} />
 
-        {/* Hero Section */}
-        <HeroSection config={config} />
+        <main className="bg-white">
+          {sectionsToRender && sectionsToRender.map((sectionName) => renderSection(sectionName))}
+        </main>
 
-        {/* About Section */}
-        <AboutSection config={config} />
+        <Footer config={wrappedConfig} suiteName={suiteName} />
+      </div>
 
-        {/* Services Section */}
-        <ServicesSection config={config} />
+      <style jsx global>{`
+        :root {
+          --color-primary: ${themeCSSVariables['--color-primary']};
+          --color-primary-dark: ${themeCSSVariables['--color-primary-dark']};
+          --color-primary-light: ${themeCSSVariables['--color-primary-light']};
+          --color-secondary: ${themeCSSVariables['--color-secondary']};
+          --color-accent: ${themeCSSVariables['--color-accent']};
+          --color-background: ${themeCSSVariables['--color-background']};
+          --color-text: ${themeCSSVariables['--color-text']};
+          --color-text-light: ${themeCSSVariables['--color-text-light']};
+          --font-heading: ${theme?.fonts?.heading || "'Playfair Display', Georgia, serif"};
+          --font-body: ${theme?.fonts?.body || "'Inter', 'Segoe UI', sans-serif"};
+        }
 
-        {/* Gallery Section */}
-        <GallerySection config={config} />
+        body {
+          font-family: var(--font-body);
+          color: var(--color-text);
+          background-color: var(--color-background);
+        }
 
-        {/* Before/After Transformations */}
-        {config.transformations && config.transformations.length > 0 && (
-          <BeforeAfterGallery transformations={config.transformations} />
-        )}
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+          font-family: var(--font-heading);
+        }
 
-        {/* Google Reviews Widget */}
-        {googleData && config.google?.placeId && (
-          <GoogleReviewsWidget googleData={googleData} placeId={config.google.placeId} />
-        )}
+        .text-primary {
+          color: var(--color-primary);
+        }
 
-        {/* Offers Section */}
-        <OffersSection config={config} />
+        .bg-primary {
+          background-color: var(--color-primary);
+        }
 
-        {/* Reviews Section */}
-        <ReviewsSection config={config} />
+        .border-primary {
+          border-color: var(--color-primary);
+        }
 
-        {/* Location Section */}
-        <LocationSection config={config} />
-
-        {/* Booking Section */}
-        <BookingSection config={config} />
-
-        {/* Footer */}
-        <Footer config={config} />
-      </main>
+        .hover\\:bg-primary:hover {
+          background-color: var(--color-primary-dark);
+        }
+      `}</style>
     </>
   );
 }
 
 /**
- * getStaticPaths - Generate static paths for all available salons
- * This enables static generation for all salon routes
+ * Get static paths
+ * First checks new sites table, falls back to old config files for backward compatibility
  */
 export async function getStaticPaths() {
   try {
-    // Get list of all available salon slugs
-    const slugs = listAvailableSalons();
-
-    // Generate paths for each salon
-    const paths = slugs.map((slug) => ({
-      params: { slug },
-    }));
-
+    // For now, use ISR to avoid lengthy build times
+    // In production, you could pre-fetch all salon slugs from the database
     return {
-      paths,
-      fallback: 'blocking', // Use blocking mode to generate at request time if not pregenerated
+      paths: [],
+      fallback: 'blocking', // ISR: render on-demand and cache
     };
   } catch (error) {
     console.error('Error in getStaticPaths:', error);
@@ -190,43 +264,89 @@ export async function getStaticPaths() {
 }
 
 /**
- * getStaticProps - Fetch salon config and Google reviews
- * Regenerates every hour (3600 seconds)
+ * Get static props
+ * Fetches salon configuration from both new sites table and old config files
  */
 export async function getStaticProps({ params }) {
   try {
     const { slug } = params;
 
-    // Load salon configuration
-    const config = loadSalonConfig(slug);
+    // Import server-only modules inside the function
+    let loadSalonConfig;
+    try {
+      const mod = await import('@/lib/loadSalonConfig');
+      loadSalonConfig = mod.loadSalonConfig;
+    } catch (importError) {
+      console.warn('Failed to import loadSalonConfig:', importError);
+      loadSalonConfig = null;
+    }
 
-    // If salon config not found, return 404
-    if (!config) {
+    let siteConfig = null;
+    let config = null;
+    let layout = null;
+    let theme = null;
+    let industry = null;
+
+    // Try to load from new sites table first
+    try {
+      siteConfig = await getSiteConfigBySlug(slug);
+      if (siteConfig && siteConfig.industry === 'salon') {
+        layout = getLayout(siteConfig.layout || 'layoutA');
+        theme = getTheme(siteConfig.theme || 'luxury');
+        industry = getIndustryModule('salon');
+      } else {
+        siteConfig = null;
+      }
+    } catch (error) {
+      console.warn('Error loading from sites table:', error);
+      siteConfig = null;
+    }
+
+    // Fall back to old config file format if not found in new table
+    if (!siteConfig && loadSalonConfig) {
+      config = loadSalonConfig(slug);
+      if (!config) {
+        return {
+          notFound: true,
+          revalidate: 3600,
+        };
+      }
+      // Use default theme and layout for old configs
+      layout = getLayout('layoutA');
+      theme = getTheme('luxury');
+      industry = getIndustryModule('salon');
+    } else if (!siteConfig && !loadSalonConfig) {
+      // Both new table and old config loading failed
       return {
         notFound: true,
-        revalidate: 3600, // Retry every hour
+        revalidate: 3600,
       };
     }
 
+    // Fetch Google Reviews if googlePlaceId exists
     let googleData = null;
-
-    // Fetch Google reviews if placeId is configured
-    if (config.google?.placeId) {
-      try {
-        googleData = await fetchGoogleReviews(config.google.placeId);
-      } catch (error) {
-        console.warn(`Error fetching Google reviews for salon ${slug}:`, error);
-        // Continue without Google data - it's optional
+    try {
+      const googlePlaceId =
+        siteConfig?.configData?.location?.googlePlaceId ||
+        config?.salon?.location?.googlePlaceId;
+      if (googlePlaceId) {
+        googleData = await fetchGoogleReviews(googlePlaceId);
       }
+    } catch (error) {
+      console.warn('Error fetching Google reviews:', error);
     }
 
     return {
       props: {
         config,
-        googleData: googleData || null,
+        siteConfig,
+        googleData,
+        layout,
+        theme,
+        industry,
+        isFallback: false,
       },
-      // Revalidate every 1 hour (3600 seconds)
-      revalidate: 3600,
+      revalidate: 3600, // ISR: Revalidate every hour
     };
   } catch (error) {
     console.error('Error in getStaticProps:', error);
