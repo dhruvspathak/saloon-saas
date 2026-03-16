@@ -57,51 +57,21 @@ npm start
 npm run export
 ```
 
-## Testing Before Deployment
+## Testing Checklist
 
-### Mobile Testing
-- [ ] Responsive design (test on actual phone)
-- [ ] Hamburger menu works
-- [ ] Touch elements are tappable
-- [ ] Images load properly
+| Category | Test |
+|----------|------|
+| Mobile | Responsive design, hamburger menu, touch elements, images load |
+| Functionality | Navigation scrolls, WhatsApp button, booking form, gallery lightbox, offers code, social links |
+| Links | Phone `tel:` links, WhatsApp `wa.me` format, HTTPS, images load |
 
-### Functionality Testing
-- [ ] Navigation links scroll to sections
-- [ ] Floating WhatsApp button works
-- [ ] Booking form submits via WhatsApp
-- [ ] Phone numbers dial correctly
-- [ ] Gallery lightbox opens/closes
-- [ ] Offers code copies to clipboard
-- [ ] Social links open in new tab
+## Deployment
 
-### Links Testing
-- [ ] All phone numbers: `tel:` links
-- [ ] All WhatsApp links: `wa.me` format
-- [ ] All external links: HTTPS
-- [ ] All images load without errors
+**Vercel (Recommended):** `vercel` → auto-deploys on git push, free HTTPS/domain, instant scaling
 
-## Deployment Options
+**Netlify:** `npm run build` → connect to netlify.com
 
-### Option 1: Vercel (Recommended)
-```bash
-npm i -g vercel
-vercel
-```
-- Auto-deploys on git push
-- Free HTTPS & domain
-- Instant scaling
-
-### Option 2: Netlify
-```bash
-npm run build
-# Connect to netlify.com
-```
-
-### Option 3: Self-Hosted
-```bash
-npm run build
-npm start
-```
+**Self-Hosted:** `npm run build && npm start`
 
 ## Common Issues & Solutions
 
@@ -181,70 +151,32 @@ public/images/             ← Static images
 }
 ```
 
-## URL Format Guide
+## URL Formats
 
-### Phone
-```
-+91 98765 43210  → +919876543210 (no spaces/dashes)
-```
+**Phone:** `+91 98765 43210` → `+919876543210` (no spaces)
 
-### WhatsApp
-```
-https://wa.me/919876543210
-https://wa.me/919876543210?text=Hi%20I%20want%20to%20book
-```
+**WhatsApp:** `https://wa.me/919876543210` or `https://wa.me/919876543210?text=message`
 
-### Google Maps Embed
-```
-https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!...
-(Get from Google My Business or Google Maps)
-```
+**Maps:** `https://www.google.com/maps/embed?pb=!1m18...` (from Google My Business)
 
-### Images (Use URLs)
-```
-https://images.unsplash.com/...
-https://cdn.example.com/...
-Or any publicly accessible image URL
-```
+**Images:** Any public URL (Unsplash, CDN, etc.)
 
-## Vercel Deployment in 2 Steps
+## Deploy to Vercel in 2 Steps
 
-1. **Push to GitHub**
-   ```bash
-   git add .
-   git commit -m "Launch"
-   git push
-   ```
+1. Push to GitHub: `git push origin main`
+2. vercel.com → New Project → Select repo → Deploy → ✅ Live!
 
-2. **Deploy to Vercel**
-   - Go to vercel.com
-   - Click "New Project"
-   - Select your GitHub repo
-   - Click "Deploy"
-   - ✅ Live in ~60 seconds!
+## SEO Tips
 
-## Marketing Tips
+Meta tags (Google results), social preview, mobile friendly, page speed, structured data
 
-1. **Meta Tags** - Appear in Google search results
-2. **Social Share** - Facebook/WhatsApp preview
-3. **Mobile Friendly** - Better Google ranking
-4. **Page Speed** - Affects SEO score
-5. **Structured Data** - Rich snippets in search
+## Docs Reference
 
-## Environment Variables (Optional)
-
-Create `.env.local`:
-```
-NEXT_PUBLIC_SITE_URL=https://yourdomain.com
-NEXT_PUBLIC_ANALYTICS_ID=G-XXXXXXXXXX
-```
-
-## Support
-
-- 📖 Read `README.md` for full documentation
-- 📋 Read `CONFIG_GUIDE.md` for detailed config options
-- 🚀 Read `SETUP_GUIDE.md` for deployment instructions
+- `README.md` - Features overview
+- `CONFIG_GUIDE.md` - Config reference
+- `ENV_SETUP.md` - Backend setup
+- `DEPLOYMENT.md` - Vercel deployment
 
 ---
 
-**Ready to launch? Start with `npm install` then edit `config/salon.json`! 🎉**
+**Start:** `npm install` → edit `config/salon.json` → `npm run dev`

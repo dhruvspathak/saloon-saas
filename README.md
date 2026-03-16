@@ -99,50 +99,9 @@ The "Book your Appointment" form includes **real-time validation and security**:
 - 💬 Success confirmation message
 - 🚀 Auto-opens WhatsApp with booking details
 
-## 📊 Get Started with Visitor Analytics
+## 📊 Visitor Analytics
 
-To start counting visitors and page views, follow these steps:
-
-### 1. Install Analytics Package
-
-The `@vercel/analytics` package is already installed in your project.
-
-### 2. Analytics Component Added
-
-The `<Analytics/>` React component has been added to your app's layout (`pages/_app.jsx`). It automatically starts collecting page views when you deploy.
-
-```jsx
-import { Analytics } from "@vercel/analytics/next"
-
-function MyApp({ Component, pageProps }) {
-  return (
-    <>
-      <Component {...pageProps} />
-      <Analytics />
-    </>
-  );
-}
-```
-
-### 3. Deploy & Visit Your Site
-
-Deploy your changes to Vercel, then visit your deployment to start collecting page view data.
-
-```bash
-# Push to your repository
-git add .
-git commit -m "Add Vercel Analytics integration"
-git push origin main
-
-# Deploy on Vercel (automatic on push)
-# Visit your deployment URL
-```
-
-### 4. View Your Analytics
-
-- If you don't see data after 30 seconds, please check for content blockers and try navigating between pages on your site
-- Visit your Vercel project dashboard to view real-time analytics and visitor statistics
-- For full documentation, refer to [Vercel Analytics docs](https://vercel.com/docs/analytics)
+Vercel Analytics is pre-configured and automatically tracks page views when deployed. Deploy to Vercel → Visit your site → Monitor on Vercel dashboard. See [Vercel Analytics docs](https://vercel.com/docs/analytics) for details.
 ## 🚀 Recent Updates
 
 ### March 2026 Release
@@ -208,51 +167,13 @@ See [CONFIG_GUIDE.md](CONFIG_GUIDE.md) for detailed configuration options.
 
 ## 🎯 Components
 
-- **Navigation**: Sticky header with smooth scroll
-- **Hero Section**: Full-screen banner with CTA buttons
-- **About**: Salon story and highlights
-- **Services**: Grid layout with pricing and duration
-- **Gallery**: Lightbox image viewer
-- **Offers**: Promotional cards with discount codes
-- **Reviews**: Client testimonials with ratings
-- **Location**: Google Maps + opening hours
-- **Booking**: Multi-channel booking form
-- **Footer**: Social links and contact info
+Navigation (sticky), Hero (banner), About (story), Services (pricing), Gallery (lightbox), Offers (codes), Reviews (ratings), Location (maps/hours), Booking (form), Footer (social)
 
-## 🎨 Design System
-
-### Colors
-- **Rose Gold**: `#B76E79` (primary)
-- **Rose Gold Dark**: `#9B5A63` (hover)
-- **Rose Gold Light**: `#D4949D` (accents)
-
-### Typography
-- **Headings**: Playfair Display (serif)
-- **Body**: Josefin Sans (modern sans-serif)
-
-### Spacing
-- Mobile: 16px base
-- Tablet: 24px base
-- Desktop: 32px base
-
-## 📱 Responsive Breakpoints
-
-- Mobile: < 640px
-- Tablet: 640px - 1024px
-- Desktop: > 1024px
+## � Design: Rose Gold (#B76E79) | Fonts: Playfair Display + Josefin Sans | Breakpoints: Mobile <640px, Tablet 640-1024px, Desktop >1024px
 
 ## ⚙️ Tech Stack
 
-- **Framework**: Next.js 15.5.10 (React 18)
-- **Styling**: TailwindCSS 3.3
-- **Images**: Next.js Image optimization with quality configuration
-- **Icons**: React Icons
-- **Lightbox**: Yet Another React Lightbox
-- **Database**: Supabase (Postgres)
-- **Analytics**: Vercel Analytics
-- **Validation**: Custom regex patterns & XSS sanitization
-- **Hosting**: Vercel (Recommended)
-- **SEO**: Built-in meta tags + JSON-LD structured data
+Next.js 15.5.10, React 18, TailwindCSS 3.3, Next.js Image optimization, React Icons, Lightbox, Supabase (Postgres), Vercel Analytics, Regex validation, Vercel hosting, SEO (meta tags + JSON-LD)
 
 ## 📊 Performance Metrics
 
@@ -273,31 +194,18 @@ See [CONFIG_GUIDE.md](CONFIG_GUIDE.md) for detailed configuration options.
 - Robots meta tag
 - Canonical URLs (automatic)
 
-## 🌐 Deployment
-
-### Vercel (Recommended)
+## 🔄 Deploy to Vercel
 
 ```bash
 npm install -g vercel
 vercel
-# Follow prompts to deploy
 ```
 
-### Environment Variables (Required for Production)
+**Env Vars (in Vercel dashboard):**
+- NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY (lead database)
+- NEXT_PUBLIC_GOOGLE_PLACES_API_KEY (Google reviews)
 
-```bash
-# Supabase (required for lead storage)
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-
-# Google Places API (optional - for reviews feature)
-NEXT_PUBLIC_GOOGLE_PLACES_API_KEY=your_api_key
-```
-
-See [ENV_SETUP.md](ENV_SETUP.md) for step-by-step instructions to get these keys.
-
-### Docker
+See [ENV_SETUP.md](ENV_SETUP.md) for keys
 
 ```dockerfile
 FROM node:18-alpine
@@ -451,45 +359,11 @@ Interactive slider showcasing service transformations.
 
 ## 📚 Documentation
 
-- [CONFIG_GUIDE.md](CONFIG_GUIDE.md) - Detailed configuration options
-- [ENV_SETUP.md](ENV_SETUP.md) - Backend services setup (Supabase, Google Places API)
-- [DEPLOYMENT.md](DEPLOYMENT.md) - Deploy to Vercel
-- [ARCHITECTURE.md](ARCHITECTURE.md) - System architecture and future roadmap
-- [QUICK_START.md](QUICK_START.md) - Quick start guide
+[CONFIG_GUIDE.md](CONFIG_GUIDE.md) | [ENV_SETUP.md](ENV_SETUP.md) | [DEPLOYMENT.md](DEPLOYMENT.md) | [ARCHITECTURE.md](ARCHITECTURE.md) | [QUICK_START.md](QUICK_START.md)
 
-## 🚀 API Endpoints
+## 🚀 Quick API Ref
 
-### POST /api/lead
-
-Submit a booking lead.
-
-**Request:**
-```json
-{
-  "salonId": "cinderella-andheri",
-  "name": "Customer Name",
-  "phone": "+91-98765-43210",
-  "service": "Keratin Treatment",
-  "preferredDate": "2026-03-20",
-  "message": "Optional message"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "leadId": "uuid...",
-  "message": "Lead saved successfully"
-}
-```
-
-## 🏢 Multi-Tenant Ready
-
-The system is designed for future multi-tenant scaling:
-- ✅ Salon ID isolation in database
-- ✅ Config-based multi-salon setup
-- ✅ Prepared for dynamic routing: `/salon/[slug]`
+**POST /api/lead:** `{salonId, name, phone, service, preferredDate, message}` → `{success, leadId}`
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for details.
 
