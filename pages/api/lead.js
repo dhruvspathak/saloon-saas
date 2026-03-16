@@ -47,10 +47,21 @@ export default async function handler(req, res) {
       message: result.message,
     });
   } catch (error) {
-    console.error('Lead API error:', error);
+    console.error('Lead API error:', error.message);
+    
+    // Check if it's a Supabase configuration error
+    if (error.message.includes('Supabase')) {
+      return res.status(503).json({
+        success: false,
+        error: 'Database service is not configured. Please contact the administrator.',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      });
+    }
+    
     return res.status(500).json({
       success: false,
-      error: 'Internal server error',
+      error: 'Failed to process lead. Please try again later.',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 }
