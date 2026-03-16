@@ -9,90 +9,34 @@ This guide covers setting up all external services required for the Salon SaaS b
 - Git
 - Vercel account (for deployment)
 
-## 1. Supabase Setup (Lead Database)
+## 1. Supabase Setup
 
-### Create Supabase Project
+**Create Project:** [supabase.com](https://supabase.com) → New Project → Fill details → Create
 
-1. Visit [supabase.com](https://supabase.com)
-2. Sign up or log in
-3. Click "New Project"
-4. Fill in project details:
-   - **Name**: `salon-saas` (or your choice)
-   - **Database Password**: Save this securely!
-   - **Region**: Choose closest to your users
-5. Wait for project creation (~2 minutes)
-
-### Create Leads Table
-
-1. Go to **Database** → **Tables**
-2. Click **Create a new table**
-3. Name it: `leads`
-4. Add columns:
-
+**Create `leads` table:** Database → Tables → Create new table with columns:
 ```sql
-id              | UUID                  | Primary Key | default: gen_random_uuid()
-salon_id        | text                  | Not Null    | -
-name            | text                  | Not Null    | -
-phone           | text                  | Not Null    | -
-service         | text                  | Nullable    | -
-preferred_date  | date                  | Nullable    | -
-message         | text                  | Nullable    | -
-status          | text                  | Not Null    | default: 'new'
-created_at      | timestamp             | Not Null    | default: now()
-updated_at      | timestamp             | Not Null    | default: now()
+id (UUID, PK), salon_id (text), name (text), phone (text), service (text),
+preferred_date (date), message (text), status (text, default 'new'),
+created_at (timestamp, default now()), updated_at (timestamp, default now())
 ```
 
-5. Click **Save**
-
-### Add Indexes (Performance)
-
-Run in SQL Editor:
-
+**Add indexes:**
 ```sql
 CREATE INDEX idx_leads_salon_id ON leads(salon_id);
 CREATE INDEX idx_leads_created_at ON leads(created_at DESC);
 CREATE INDEX idx_leads_status ON leads(status);
 ```
 
-### Get API Keys
-
-1. Go to **Settings** → **API**
-2. Copy:
-   - `Project URL` → `NEXT_PUBLIC_SUPABASE_URL`
-   - `anon public` key → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `service_role secret` → `SUPABASE_SERVICE_ROLE_KEY`
+**Get API Keys:** Settings → API → Copy Project URL, anon key, service_role key
 
 ## 2. Google Places API Setup
 
-### Enable Google Places API
+**Enable API:** [Google Cloud Console](https://console.cloud.google.com) → Places API → Enable → Credentials → Create API Key
 
-1. Go to [Google Cloud Console](https://console.cloud.google.com)
-2. Create a new project or select existing
-3. Search for **Places API**
-4. Click **Enable**
-5. Go to **Credentials**
-6. Click **Create Credentials** → **API Key**
-7. Copy the key → `NEXT_PUBLIC_GOOGLE_PLACES_API_KEY`
-
-### Get Your Place ID
-
-For your salon:
-
-1. Visit [Google Maps](https://maps.google.com)
-2. Search for your salon
-3. Click on it to open details
-4. Copy the URL: `maps.google.com/maps/place/...?q=place_id:**ChIJ...**`
-5. Extract the `ChIJ...` part → Add to `config/salon.json`:
-
+**Get Place ID:** [Google Maps](https://maps.google.com) → Search salon → Copy URL parameter `place_id:ChIJ...` → Add to `config/salon.json`:
 ```json
-{
-  "google": {
-    "placeId": "ChIJ1b1-KKb64zoRTYlIx-dI1xk"
-  }
-}
+{"google": {"placeId": "ChIJ1b1-KKb64zoRTYlIx-dI1xk"}}
 ```
-
-**Alternative:** Use [Google Places API Finder](https://developers.google.com/maps/documentation/places/web-service/overview)
 
 ## 3. Environment Variables
 
@@ -121,99 +65,29 @@ NEXT_PUBLIC_SALON_ID=cinderella-andheri
 4. Add all variables from `.env.local`
 5. Deploy
 
-## 4. Testing Setup
+## 4. Testing
 
-### Test Supabase Connection
+**Supabase:** `npm run dev` → POST to `/api/lead` → Should return `{success: true, leadId: "uuid..."}`
 
-```bash
-npm run dev
-# Visit http://localhost:3000/api/lead with POST request
-curl -X POST http://localhost:3000/api/lead \
-  -H "Content-Type: application/json" \
-  -d '{
-    "salonId": "test",
-    "name": "Test User",
-    "phone": "9876543210",
-    "service": "Test Service"
-  }'
-```
-
-Expected response:
-```json
-{
-  "success": true,
-  "leadId": "uuid...",
-  "message": "Lead saved successfully"
-}
-```
-
-### Test Google Reviews
-
-Check browser console while visiting homepage. Should see:
-```
-Rating fetched: 4.7 stars
-Reviews: 5 reviews loaded
-```
+**Google Reviews:** Visit homepage → View browser console → Should show "Rating fetched" messages
 
 ## 5. Troubleshooting
 
-### Supabase Connection Failed
-- ✅ Check both URL and keys are correct
-- ✅ Verify `NEXT_PUBLIC_` prefix on client-side vars
-- ✅ Check network in browser DevTools
-- ✅ Restart dev server: `npm run dev`
+| Issue | Solution |
+|-------|----------|
+| Supabase connection fails | Verify URL & keys, check `NEXT_PUBLIC_` prefix, restart dev server |
+| Google API 401 error | Enable Places API, verify key is active, remove key restrictions |
+| Leads not saving | Check Supabase RLS, verify service role key in .env, check network tab |
+| Vercel build fails | Add all `NEXT_PUBLIC_` vars to Vercel dashboard, check deployment logs |
 
-### Google API Returns 401
-- ✅ API key is active and valid
-- ✅ Places API is enabled in Google Cloud
-- ✅ Check API key restrictions (should be "unrestricted" or include your domain)
-
-### Leads Not Saving
-- ✅ Check Supabase table permissions (RLS)
-- ✅ Verify service role key is used on server-side only
-- ✅ Check browser network tab for POST errors
-
-### Build Fails on Vercel
-- ✅ Ensure all `NEXT_PUBLIC_` vars are in Vercel dashboard
-- ✅ Check logs: **Vercel Dashboard** → **Deployments** → **Logs**
-
-## 6. Database Row-Level Security (Optional But Recommended)
-
-For production security, set up RLS policies:
+## 6. Production Security (RLS)
 
 ```sql
--- Enable RLS on leads table
 ALTER TABLE leads ENABLE ROW LEVEL SECURITY;
-
--- Allow anyone to insert
-CREATE POLICY "Allow insert" ON leads 
-  FOR INSERT WITH CHECK (true);
-
--- Allow service role to read all
-CREATE POLICY "Service role read all" ON leads 
-  FOR SELECT TO authenticated, service_role USING (true);
+CREATE POLICY "Allow insert" ON leads FOR INSERT WITH CHECK (true);
+CREATE POLICY "Service role read all" ON leads FOR SELECT USING (true);
 ```
 
-## 7. Monitoring & Logs
+## 7. Monitoring
 
-### Supabase Logs
-- **Supabase Dashboard** → **Logs** → View insert operations
-
-### Vercel Logs
-- **Vercel Dashboard** → **Deployments** → **View Runtime Logs**
-
-### Local Development
-- Terminal shows all console.log and errors
-- Browser DevTools → Network tab for API calls
-
-## Next Steps
-
-✅ Environment setup complete!
-
-Now you can:
-1. ✅ Book appointments (saved to database)
-2. ✅ Display Google reviews on homepage
-3. ✅ View before/after gallery
-4. ✅ Deploy to Vercel with all features
-
-See [ARCHITECTURE.md](ARCHITECTURE.md) for technical details.
+**Supabase:** Dashboard → Logs | **Vercel:** Dashboard → Deployments → Logs | **Local:** Terminal + DevTools Network
