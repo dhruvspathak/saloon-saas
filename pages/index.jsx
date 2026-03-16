@@ -41,14 +41,6 @@ export default function Home({ config, googleData }) {
         <meta name="twitter:description" content={salon.meta.description} />
         <meta name="twitter:image" content={salon.meta.ogImage} />
 
-        {/* Fonts */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Josefin+Sans:wght@300;400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
-
         {/* Favicon */}
         <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75' fill='%23B76E79'>✨</text></svg>" />
 

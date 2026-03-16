@@ -22,14 +22,6 @@ export default function SalonsDirectory({ salons }) {
         <meta property="og:title" content="Our Salons | Salon Network" />
         <meta property="og:description" content="Explore our network of premium beauty salons." />
         <meta property="og:url" content={typeof window !== 'undefined' ? `${window.location.origin}/salons` : ''} />
-
-        {/* Fonts */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Josefin+Sans:wght@300;400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
       </Head>
 
       <main className="w-full">
