@@ -15,12 +15,19 @@ A modern, fully responsive beauty salon website template with **backend-capable 
 - 🗺️ **Location Integration**: Google Maps embedded
 - ⭐ **Reviews Section**: Client testimonials with ratings
 - 🎯 **Smart CTAs**: Floating WhatsApp button, sticky navigation
+- 📊 **Visitor Analytics**: Vercel Analytics integration for tracking page views
 
-### Backend & Integrations (NEW!)
+### Security & Validation
+- 🔒 **Form Validation**: Real-time field validation with regex patterns
+- 🛡️ **XSS Prevention**: Input sanitization to prevent attacks
+- 📱 **Phone Validation**: Indian phone format validation (+91, 10 digits)
+- ✅ **Field Error Messages**: User-friendly validation feedback
+- 🔐 **Secure Data**: All form data sanitized before storage
+
+### Backend & Integrations
 - 🔗 **Google Reviews Integration**: Fetch and display Google ratings & reviews (with ISR caching)
 - 📊 **Lead Database**: Supabase Postgres with secure lead storage
 - 💾 **Lead Management**: Track all booking inquiries automatically
-- 🛡️ **Phone Validation**: Indian phone number validation & sanitization
 - 📧 **Notifications Ready**: Prepared for WhatsApp, Email, SMS (future)
 - 🏢 **Multi-Tenant Ready**: Designed for SaaS scaling
 
@@ -67,7 +74,32 @@ See [ENV_SETUP.md](ENV_SETUP.md) for detailed setup instructions.
 5. Save and refresh
 6. Deploy to Vercel
 
-## � Get Started with Visitor Analytics
+## 🎫 Booking Form with Validation
+
+The "Book your Appointment" form includes **real-time validation and security**:
+
+### Validation Rules
+- **Name**: 2-100 characters, letters/spaces/hyphens/apostrophes only
+- **Phone**: Indian phone number (10 digits, accepts +91, 0xx, or plain format)
+- **Service**: Required - must select from available services
+- **Date**: Must be today or in the future, max 90 days ahead
+- **Message**: Optional, max 500 characters, HTML/scripts blocked
+
+### Security Features
+- ✅ Real-time validation feedback as user types
+- ✅ XSS prevention - all inputs sanitized
+- ✅ Phone number normalization to +91XXXXXXXXXX
+- ✅ Server-side validation in API routes
+- ✅ Secure storage in Supabase database
+
+### User Experience
+- 🟢 Green checkmark when fields are valid
+- 🔴 Red border + error message for invalid input
+- 📊 Character counter for message field
+- 💬 Success confirmation message
+- 🚀 Auto-opens WhatsApp with booking details
+
+## 📊 Get Started with Visitor Analytics
 
 To start counting visitors and page views, follow these steps:
 
@@ -111,7 +143,15 @@ git push origin main
 - If you don't see data after 30 seconds, please check for content blockers and try navigating between pages on your site
 - Visit your Vercel project dashboard to view real-time analytics and visitor statistics
 - For full documentation, refer to [Vercel Analytics docs](https://vercel.com/docs/analytics)
+## 🚀 Recent Updates
 
+### March 2026 Release
+- ✅ **Security**: Upgraded to Next.js 15.5.10 (fixed CVE in Next.js 14.2.35)
+- ✅ **Form Validation**: Added comprehensive regex & XSS protection to booking form
+- ✅ **Analytics**: Integrated Vercel Analytics for visitor tracking
+- ✅ **Performance**: Fixed Next.js 15 warnings (stylesheets, image quality)
+- ✅ **Accessibility**: Real-time validation feedback with field-level error messages
+- ✅ **Data Security**: All form inputs sanitized before API submission
 ## �📋 Configuration
 
 ### Minimal Config
@@ -203,13 +243,16 @@ See [CONFIG_GUIDE.md](CONFIG_GUIDE.md) for detailed configuration options.
 
 ## ⚙️ Tech Stack
 
-- **Framework**: Next.js 14 (React 18)
+- **Framework**: Next.js 15.5.10 (React 18)
 - **Styling**: TailwindCSS 3.3
-- **Images**: Next.js Image optimization
+- **Images**: Next.js Image optimization with quality configuration
 - **Icons**: React Icons
 - **Lightbox**: Yet Another React Lightbox
-- **Hosting**: Vercel
-- **SEO**: Built-in meta tags + JSON-LD
+- **Database**: Supabase (Postgres)
+- **Analytics**: Vercel Analytics
+- **Validation**: Custom regex patterns & XSS sanitization
+- **Hosting**: Vercel (Recommended)
+- **SEO**: Built-in meta tags + JSON-LD structured data
 
 ## 📊 Performance Metrics
 
@@ -237,8 +280,22 @@ See [CONFIG_GUIDE.md](CONFIG_GUIDE.md) for detailed configuration options.
 ```bash
 npm install -g vercel
 vercel
-# Follow prompts
+# Follow prompts to deploy
 ```
+
+### Environment Variables (Required for Production)
+
+```bash
+# Supabase (required for lead storage)
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+# Google Places API (optional - for reviews feature)
+NEXT_PUBLIC_GOOGLE_PLACES_API_KEY=your_api_key
+```
+
+See [ENV_SETUP.md](ENV_SETUP.md) for step-by-step instructions to get these keys.
 
 ### Docker
 
@@ -249,13 +306,6 @@ COPY . .
 RUN npm install && npm run build
 EXPOSE 3000
 CMD ["npm", "start"]
-```
-
-### Environment Variables
-
-```
-NEXT_PUBLIC_ANALYTICS_ID=your_id
-NEXT_PUBLIC_SITE_URL=https://yourdomain.com
 ```
 
 ## 📁 Project Structure
@@ -269,24 +319,40 @@ salon-saas/
 │   ├── GallerySection.jsx
 │   ├── OffersSection.jsx
 │   ├── ReviewsSection.jsx
-│   ├── BookingSection.jsx
+│   ├── BookingSection.jsx  # ✨ With real-time validation
 │   ├── LocationSection.jsx
 │   ├── AboutSection.jsx
+│   ├── GoogleReviewsWidget.jsx
 │   └── Footer.jsx
+├── pages/                   # Next.js pages
+│   ├── _app.jsx            # Analytics integrated
+│   ├── _document.jsx       # Global fonts
+│   ├── index.jsx
+│   ├── salons.jsx
+│   ├── salon/[slug].jsx
+│   └── api/
+│       └── lead.js         # Booking API endpoint
 ├── config/                  # Configuration files
-│   └── salon.json          # Main config (EDIT THIS!)
-├── pages/                  # Next.js pages
-│   ├── _app.jsx
-│   ├── _document.jsx
-│   └── index.jsx
+│   ├── salon.json          # Main config (EDIT THIS!)
+│   └── salons/             # Multi-tenant configs
 ├── public/
 │   └── images/             # Static images
+├── services/               # Business logic
+│   ├── leadProcessor.js    # Lead processing & validation
+│   └── googleReviews.js
+├── utils/                  # Utility functions
+│   ├── validation.js       # 🔒 Form validation & XSS prevention
+│   ├── helpers.js
+│   └── seo.js
+├── lib/
+│   └── supabase.js         # Supabase client initialization
+├── types/                  # TypeScript types
 ├── styles/
 │   └── globals.css
-├── utils/                  # Utility functions
-├── next.config.js
+├── next.config.js          # Next.js configuration
 ├── tailwind.config.js
 ├── jsconfig.json
+├── .env                    # Environment variables
 └── package.json
 ```
 
@@ -433,6 +499,42 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for details.
 4. **Social links** - Include all relevant platforms
 5. **Mobile test** - Always test on actual mobile devices
 6. **Performance** - Monitor Lighthouse scores
+
+## 👥 Getting Started - 3 Minutes
+
+### Step 1: Clone & Install (1 min)
+```bash
+git clone https://github.com/yourusername/salon-saas.git
+cd salon-saas
+npm install
+```
+
+### Step 2: Configure Your Salon (1 min)
+Edit `config/salon.json` with your salon details:
+- Name, tagline, location
+- Services with prices and duration
+- Contact info (phone, WhatsApp, email)
+- Gallery images
+
+### Step 3: Test Locally (1 min)
+```bash
+npm run dev
+# Visit http://localhost:3000
+```
+
+That's it! You now have a fully functional salon website with:
+- ✅ Booking form with validation
+- ✅ WhatsApp integration
+- ✅ Before/after gallery
+- ✅ Google Reviews (optional)
+- ✅ Visitor Analytics
+
+### Optional: Setup Backend
+
+To enable lead storage and Google Reviews:
+1. Follow [ENV_SETUP.md](ENV_SETUP.md)
+2. Add environment variables to `.env`
+3. Restart dev server
 
 ## 🆘 Troubleshooting
 
