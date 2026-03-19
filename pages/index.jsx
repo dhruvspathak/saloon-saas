@@ -17,12 +17,13 @@ import { fetchGoogleReviews } from '@/services/googleReviews';
 
 export default function Home({ config, googleData }) {
   const { salon } = config;
+  const pageTitle = Array.isArray(salon?.meta?.title) ? salon.meta.title.join(' ') : salon?.meta?.title;
 
   return (
     <>
       <Head>
         {/* Meta Tags */}
-        <title>{salon.meta.title}</title>
+        <title>{pageTitle}</title>
         <meta name="description" content={salon.meta.description} />
         <meta name="keywords" content={salon.meta.keywords} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -30,14 +31,14 @@ export default function Home({ config, googleData }) {
 
         {/* Open Graph / Social Media */}
         <meta property="og:type" content="website" />
-        <meta property="og:title" content={salon.meta.title} />
+        <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={salon.meta.description} />
         <meta property="og:image" content={salon.meta.ogImage} />
         <meta property="og:site_name" content={salon.name} />
 
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={salon.meta.title} />
+        <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={salon.meta.description} />
         <meta name="twitter:image" content={salon.meta.ogImage} />
 

@@ -7,6 +7,8 @@
  */
 
 import { createSite } from '@/services/siteService';
+import { buildSiteConfigJson, recommendConfig } from '@/services/recommendationEngine';
+import { getSupabaseServerClient } from '@/lib/supabase';
 
 /**
  * Validate internal API key
@@ -44,14 +46,6 @@ function validateRequestData(data) {
 
   if (!data.industry) {
     errors.push('Industry is required');
-  }
-
-  if (!data.theme) {
-    errors.push('Theme is required');
-  }
-
-  if (!data.layout) {
-    errors.push('Layout is required');
   }
 
   if (!data.phone?.trim()) {
@@ -92,6 +86,7 @@ export default async function handler(req, res) {
       industry,
       theme,
       layout,
+      components,
       phone,
       whatsapp,
       address,
@@ -106,17 +101,68 @@ export default async function handler(req, res) {
       });
     }
 
-    // Create site
-    const newSite = await createSite({
-      name: businessName,
-      slug: slug.toLowerCase().trim(),
-      industry: industry.toLowerCase(),
-      theme: theme.toLowerCase(),
-      layout,
+    const normalizedSlug = slug.toLowerCase().trim();
+    const normalizedIndustry = industry.toLowerCase();
+
+    // Prevent duplicate slug (clean 409 instead of DB 500)
+    const supabaseAdmin = getSupabaseServerClient();
+    const { data: existingSite, error: existingError } = await supabaseAdmin
+      .from('sites')
+      .select('id, slug')
+      .eq('slug', normalizedSlug)
+      .maybeSingle();
+
+    if (existingError) {
+      console.error('Error checking existing slug:', existingError);
+      return res.status(500).json({
+        error: 'Failed to validate slug',
+        details: 'Database error occurred while checking slug uniqueness',
+      });
+    }
+
+    if (existingSite) {
+      return res.status(409).json({
+        error: 'Slug already exists',
+        details: `A site with slug '${normalizedSlug}' already exists. Please choose a different slug.`,
+      });
+    }
+
+    // Apply recommendation engine + merge user overrides
+    const rec = recommendConfig(normalizedIndustry, {
+      seed: normalizedSlug,
+      overrides: {
+        theme,
+        layout,
+        components,
+      },
+    });
+
+    const config_json = buildSiteConfigJson({
+      businessName,
+      slug: normalizedSlug,
+      industry: normalizedIndustry,
+      theme: theme || rec.theme,
+      layout: layout || rec.layout,
+      components: components || rec.components,
       phone,
       whatsapp,
       address,
       googlePlaceId,
+      seed: normalizedSlug,
+    });
+
+    // Create site
+    const newSite = await createSite({
+      name: businessName,
+      slug: normalizedSlug,
+      industry: normalizedIndustry,
+      theme: (theme || rec.theme).toLowerCase(),
+      layout: layout || rec.layout,
+      phone,
+      whatsapp,
+      address,
+      googlePlaceId,
+      config_json,
     });
 
     if (!newSite) {

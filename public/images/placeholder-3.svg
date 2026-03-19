@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
+  <defs>
+    <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#0b1020"/>
+      <stop offset="1" stop-color="#d4af37"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#g)"/>
+  <text x="70" y="120" fill="rgba(255,255,255,0.88)" font-family="system-ui, -apple-system, Segoe UI, Roboto, Arial" font-size="42" font-weight="700">
+    Placeholder Image 3
+  </text>
+  <text x="70" y="180" fill="rgba(255,255,255,0.7)" font-family="system-ui, -apple-system, Segoe UI, Roboto, Arial" font-size="22">
+    Replace placeholders with real visuals.
+  </text>
+</svg>
+

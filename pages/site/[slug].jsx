@@ -1,15 +1,8 @@
 import Head from 'next/head';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 import Navigation from '@/components/Navigation';
-import HeroSection from '@/components/HeroSection';
-import AboutSection from '@/components/AboutSection';
-import ServicesSection from '@/components/ServicesSection';
-import GallerySection from '@/components/GallerySection';
-import OffersSection from '@/components/OffersSection';
-import ReviewsSection from '@/components/ReviewsSection';
-import LocationSection from '@/components/LocationSection';
-import BookingSection from '@/components/BookingSection';
-import BeforeAfterGallery from '@/components/BeforeAfterGallery';
+import SectionRenderer from '@/components/SectionRenderer';
 import Footer from '@/components/Footer';
 
 import { getSiteConfigBySlug } from '@/services/siteService';
@@ -52,12 +45,12 @@ export default function SitePage({ siteConfig, googleData, layout, theme, indust
         <div className="text-center">
           <h1 className="text-4xl font-serif font-bold text-gray-900 mb-4">404</h1>
           <p className="text-gray-600 text-lg mb-8">Site not found</p>
-          <a
+          <Link
             href="/"
             className="inline-block px-6 py-3 bg-rose-gold text-white rounded hover:bg-rose-gold-dark transition"
           >
             Back to Home
-          </a>
+          </Link>
         </div>
       </div>
     );
@@ -65,6 +58,7 @@ export default function SitePage({ siteConfig, googleData, layout, theme, indust
 
   const config = siteConfig.configData || {};
   const siteInfo = config.site || {};
+  const industryKey = (siteConfig.industry || siteInfo.industry || 'salon').toLowerCase();
 
   // Apply theme CSS variables
   const themeCSSVariables = {
@@ -78,67 +72,6 @@ export default function SitePage({ siteConfig, googleData, layout, theme, indust
     '--color-text-light': theme.colors.textLight,
   };
 
-  /**
-   * Render section component based on section name
-   * @param {string} sectionName - Name of the section
-   * @returns {JSX.Element} Rendered section
-   */
-  const renderSection = (sectionName) => {
-    switch (sectionName) {
-      case 'Hero':
-        return <HeroSection key="hero" config={config.hero} suiteName={siteInfo.name} />;
-      case 'About':
-        return <AboutSection key="about" config={config.about} />;
-      case 'Services':
-        return (
-          <ServicesSection
-            key="services"
-            services={config.services || []}
-            terminology={industry.terminology}
-          />
-        );
-      case 'Gallery':
-        return (
-          <GallerySection
-            key="gallery"
-            images={config.gallery || []}
-            siteSlug={siteInfo.slug}
-          />
-        );
-      case 'BeforeAfter':
-        return (
-          <BeforeAfterGallery
-            key="before-after"
-            images={config.beforeAfter || []}
-            siteSlug={siteInfo.slug}
-          />
-        );
-      case 'Offers':
-        return <OffersSection key="offers" offers={config.offers || []} />;
-      case 'Reviews':
-        return (
-          <ReviewsSection
-            key="reviews"
-            reviews={googleData?.reviews || config.reviews || []}
-            rating={googleData?.rating}
-          />
-        );
-      case 'Location':
-        return <LocationSection key="location" config={config.location} />;
-      case 'Booking':
-        return (
-          <BookingSection
-            key="booking"
-            siteSlug={siteInfo.slug}
-            terminology={industry.terminology}
-            siteName={siteInfo.name}
-          />
-        );
-      default:
-        return null;
-    }
-  };
-
   return (
     <>
       <Head>
@@ -149,13 +82,18 @@ export default function SitePage({ siteConfig, googleData, layout, theme, indust
       </Head>
 
       <div style={themeCSSVariables} className={`theme-${theme.name}`}>
-        <Navigation config={config.location} suiteName={siteInfo.name} />
+        <Navigation config={config} suiteName={siteInfo.name} industryKey={industryKey} />
 
         <main className="bg-white">
-          {layout && layout.map((sectionName) => renderSection(sectionName))}
+          <SectionRenderer
+            layout={layout}
+            config={config}
+            industryKey={industryKey}
+            googleData={googleData}
+          />
         </main>
 
-        <Footer config={config.location} suiteName={siteInfo.name} />
+        <Footer config={config} industryKey={industryKey} />
       </div>
 
       <style jsx global>{`
@@ -277,9 +215,13 @@ export async function getStaticProps({ params }) {
     const config = siteConfig.configData || {};
 
     // Get layout, theme, and industry configuration
-    const layout = getLayout(siteConfig.layout || 'layoutA');
-    const theme = getTheme(siteConfig.theme || 'luxury');
-    const industry = getIndustryModule(siteConfig.industry || 'salon');
+    const layoutName = siteConfig.layout || config?.site?.layout || 'layoutA';
+    const themeName = siteConfig.theme || config?.site?.theme || 'luxury';
+    const industryName = siteConfig.industry || config?.site?.industry || 'salon';
+
+    const layout = getLayout(layoutName);
+    const theme = getTheme(themeName);
+    const industry = getIndustryModule(industryName);
 
     // Fetch Google Reviews if googlePlaceId exists
     let googleData = null;

@@ -1,5 +1,6 @@
-export default function LocationSection({ config }) {
-  const { location } = config.salon;
+export default function LocationSection({ config, industryKey = 'salon' }) {
+  const industry = config?.[industryKey] || config?.salon || {};
+  const location = industry.location || {};
 
   const openDirections = () => {
     const maps = `https://www.google.com/maps/search/${encodeURIComponent(
@@ -23,7 +24,7 @@ export default function LocationSection({ config }) {
           {/* Map */}
           <div className="rounded-xl overflow-hidden shadow-elegance h-96">
             <iframe
-              src={location.googleMapEmbed}
+              src={location.googleMapEmbed || 'https://www.google.com/maps?q=India&output=embed'}
               width="100%"
               height="100%"
               style={{ border: 0, borderRadius: '12px' }}
@@ -62,12 +63,14 @@ export default function LocationSection({ config }) {
               >
                 {location.phone}
               </a>
-              <a
-                href={`mailto:${location.email}`}
-                className="block text-rose-gold hover:text-rose-gold-dark font-sans font-bold transition-colors"
-              >
-                {location.email}
-              </a>
+              {location.email && (
+                <a
+                  href={`mailto:${location.email}`}
+                  className="block text-rose-gold hover:text-rose-gold-dark font-sans font-bold transition-colors"
+                >
+                  {location.email}
+                </a>
+              )}
             </div>
 
             {/* Opening Hours */}
@@ -76,7 +79,7 @@ export default function LocationSection({ config }) {
                 🕐 Opening Hours
               </h3>
               <div className="space-y-2 font-sans text-gray-700">
-                {Object.entries(location.openingHours).map(([day, hours]) => (
+                {Object.entries(location.openingHours || {}).map(([day, hours]) => (
                   <div key={day} className="flex justify-between">
                     <span className="capitalize font-semibold">
                       {day}:
@@ -88,14 +91,16 @@ export default function LocationSection({ config }) {
             </div>
 
             {/* CTA */}
-            <a
-              href={`https://wa.me/${location.whatsapp.replace(/\D/g, '')}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block bg-green-500 hover:bg-green-600 text-white py-4 rounded-lg font-sans font-bold text-center text-lg transition-all duration-300 shadow-elegance"
-            >
-              💬 Chat on WhatsApp
-            </a>
+            {location.whatsapp && (
+              <a
+                href={`https://wa.me/${String(location.whatsapp).replace(/\D/g, '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block bg-green-500 hover:bg-green-600 text-white py-4 rounded-lg font-sans font-bold text-center text-lg transition-all duration-300 shadow-elegance"
+              >
+                💬 Chat on WhatsApp
+              </a>
+            )}
           </div>
         </div>
       </div>

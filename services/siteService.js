@@ -16,16 +16,29 @@ import { getLayout } from '@/layouts';
  */
 export async function getSiteBySlug(slug) {
   try {
-    if (!supabase) {
+    // Prefer server-side service role client when available (avoids RLS issues for public reads)
+    const client = (() => {
+      if (typeof window === 'undefined') {
+        try {
+          return getSupabaseServerClient();
+        } catch (e) {
+          // Fall back to anon client if server env isn't configured
+          return supabase;
+        }
+      }
+      return supabase;
+    })();
+
+    if (!client) {
       console.error('Supabase client not configured');
       return null;
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await client
       .from('sites')
       .select('*')
       .eq('slug', slug)
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error(`Error fetching site with slug ${slug}:`, error);
@@ -110,6 +123,7 @@ export async function createSite(siteData) {
       whatsapp,
       address,
       googlePlaceId,
+      config_json,
       ...otherData
     } = siteData;
 
@@ -118,31 +132,48 @@ export async function createSite(siteData) {
       throw new Error('Slug and name are required');
     }
 
-    // Get industry module to populate default services
-    const industryModule = getIndustryModule(industry);
-    const themeObj = getTheme(theme);
-    const layoutSections = getLayout(layout);
-
-    // Build default config
-    const defaultConfig = {
-      site: {
-        id: slug,
-        slug,
-        name,
-        industry,
-        theme,
-        layout,
-      },
-      location: {
-        address,
-        phone,
-        whatsapp,
-        googlePlaceId,
-      },
-      services: industryModule.defaultServices || [],
-      sections: industryModule.sections || [],
-      ...otherData,
-    };
+    // Build config_json if not supplied (backward compatibility)
+    let finalConfig = config_json;
+    if (!finalConfig) {
+      const industryModule = getIndustryModule(industry);
+      finalConfig = {
+        site: {
+          id: slug,
+          slug,
+          name,
+          industry,
+          theme,
+          layout,
+          sections: getLayout(layout),
+          components: {
+            hero: 'heroA',
+            services: 'servicesA',
+          },
+        },
+        [industry]: {
+          id: slug,
+          slug,
+          name,
+          tagline: 'Professional Services',
+          hero: { backgroundImage: '/images/hero-default.svg', overlayOpacity: 0.55 },
+          about: { headline: `About ${name}`, description: industryModule.description || '', yearsInBusiness: 5, clientsSatisfied: '1,000+', highlights: [] },
+          services: (industryModule.defaultServices || []).map((s, idx) => ({ id: `${industry}-service-${idx + 1}`, ...s })),
+          gallery: [],
+          offers: [],
+          reviews: [],
+          location: {
+            address,
+            phone,
+            whatsapp,
+            googlePlaceId,
+            email: '',
+            googleMapEmbed: address ? `https://www.google.com/maps?q=${encodeURIComponent(address)}&output=embed` : '',
+            openingHours: {},
+          },
+        },
+        ...otherData,
+      };
+    }
 
     // Create site record
     const { data, error } = await supabaseAdmin
@@ -154,7 +185,7 @@ export async function createSite(siteData) {
           industry,
           theme,
           layout,
-          config_json: defaultConfig,
+          config_json: finalConfig,
           created_at: new Date().toISOString(),
         },
       ])

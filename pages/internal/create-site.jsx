@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import { getAvailableIndustries, getIndustryModule } from '@/industries';
 import { getAvailableThemes } from '@/themes';
 import { getAvailableLayouts } from '@/layouts';
+import { recommendConfig } from '@/services/recommendationEngine';
 
 /**
  * Internal Site Generator Page
@@ -25,6 +26,10 @@ export default function CreateSitePage() {
     industry: 'salon',
     theme: 'luxury',
     layout: 'layoutA',
+    components: {
+      hero: 'heroA',
+      services: 'servicesA',
+    },
     phone: '',
     whatsapp: '',
     address: '',
@@ -106,6 +111,35 @@ export default function CreateSitePage() {
     }
   };
 
+  const handleComponentChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      components: {
+        ...(prev.components || {}),
+        [name]: value,
+      },
+    }));
+  };
+
+  const applySmartDefaults = () => {
+    const rec = recommendConfig(formData.industry, {
+      seed: formData.slug || formData.businessName || formData.industry,
+    });
+    setFormData((prev) => ({
+      ...prev,
+      theme: rec.theme,
+      layout: rec.layout,
+      components: rec.components,
+    }));
+  };
+
+  // Auto-fill theme/layout/components whenever industry changes
+  useEffect(() => {
+    applySmartDefaults();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.industry]);
+
   /**
    * Handle form submission
    */
@@ -150,6 +184,10 @@ export default function CreateSitePage() {
         industry: 'salon',
         theme: 'luxury',
         layout: 'layoutA',
+        components: {
+          hero: 'heroA',
+          services: 'servicesA',
+        },
         phone: '',
         whatsapp: '',
         address: '',
@@ -285,6 +323,54 @@ export default function CreateSitePage() {
                   </option>
                 ))}
               </select>
+            </div>
+
+            {/* Component Variants */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Hero Variant
+                </label>
+                <select
+                  name="hero"
+                  value={formData.components?.hero || 'heroA'}
+                  onChange={handleComponentChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                >
+                  {['heroA', 'heroB', 'heroC'].map((v) => (
+                    <option key={v} value={v}>
+                      {v}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Services Variant
+                </label>
+                <select
+                  name="services"
+                  value={formData.components?.services || 'servicesA'}
+                  onChange={handleComponentChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                >
+                  {['servicesA'].map((v) => (
+                    <option key={v} value={v}>
+                      {v}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={applySmartDefaults}
+                className="text-sm font-semibold text-blue-600 hover:text-blue-700"
+              >
+                Apply smart defaults
+              </button>
             </div>
 
             {/* Layout */}

@@ -1,5 +1,6 @@
-export default function AboutSection({ config }) {
-  const { about } = config.salon;
+export default function AboutSection({ config, industryKey = 'salon' }) {
+  const industry = config?.[industryKey] || config?.salon || {};
+  const about = industry.about || {};
 
   return (
     <section className="py-20 px-4 bg-gray-50">
@@ -49,7 +50,7 @@ export default function AboutSection({ config }) {
 
         {/* Highlights */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {about.highlights.map((highlight, index) => (
+          {(about.highlights || []).map((highlight, index) => (
             <div
               key={index}
               className="bg-white rounded-xl p-8 shadow-card hover:shadow-elegance transition-all duration-300 text-center"

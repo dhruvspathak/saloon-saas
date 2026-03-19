@@ -267,29 +267,3 @@ export async function deleteOutdatedLeads() {
     return 0;
   }
 }
-
-    let query = supabase
-      .from('leads')
-      .select('*')
-      .eq('salon_id', salonId)
-      .order('created_at', { ascending: false });
-
-    // Optional filters
-    if (options.status) {
-      query = query.eq('status', options.status);
-    }
-
-    if (options.limit) {
-      query = query.limit(options.limit);
-    }
-
-    const { data, error } = await query;
-
-    if (error) throw error;
-
-    return data || [];
-  } catch (error) {
-    console.error('Error fetching leads:', error);
-    return [];
-  }
-}

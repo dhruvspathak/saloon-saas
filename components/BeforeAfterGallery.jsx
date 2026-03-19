@@ -11,6 +11,12 @@ import { useState } from 'react';
  * @param {Array} transformations - Array of {title, before, after}
  */
 export default function BeforeAfterGallery({ transformations }) {
+  // Backward/forward compatible: allow passing {config, industryKey} instead of raw `transformations`
+  if (!transformations && arguments?.[0]?.config) {
+    const { config, industryKey = 'salon' } = arguments[0];
+    const industry = config?.[industryKey] || config?.salon || {};
+    transformations = industry.beforeAfter || industry.transformations || [];
+  }
   const [activeIndex, setActiveIndex] = useState(0);
   const [sliderPosition, setSliderPosition] = useState(50);
 

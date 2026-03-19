@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
-export default function Navigation({ config, suiteName = 'Our Business' }) {
+export default function Navigation({ config, suiteName = 'Our Business', industryKey = 'salon' }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -24,8 +24,9 @@ export default function Navigation({ config, suiteName = 'Our Business' }) {
   ];
 
   // Extract business name and tagline from either config format or use defaults
-  const businessName = suiteName || config?.salon?.name || 'Our Business';
-  const businessTagline = config?.salon?.tagline || 'Professional Services';
+  const industry = config?.[industryKey] || config?.salon || {};
+  const businessName = suiteName || industry?.name || 'Our Business';
+  const businessTagline = industry?.tagline || 'Professional Services';
 
   return (
     <nav
