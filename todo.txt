@@ -1,0 +1,478 @@
+//Prompt 1: (SEO+Routing enhancements)
+You are a senior full-stack engineer specializing in SEO-focused SaaS platforms built on Next.js.
+
+You are working on a multi-tenant, multi-industry website generation platform with:
+
+- Next.js 15
+- TailwindCSS
+- Supabase
+- dynamic routing (/site/[slug])
+- multi-industry modules
+- themes and layouts
+- internal site generator
+- lead ingestion API
+
+Your task is to implement **production-grade SEO and routing improvements** for Phase 1, while preparing the architecture for Phase 2 (custom domains) and Phase 3 (automated onboarding).
+
+--------------------------------
+
+1. SEO METADATA SYSTEM
+
+Create a reusable SEO utility:
+
+/utils/seoBuilder.js
+
+Function:
+
+buildSEO(site)
+
+Returns:
+
+- title
+- description
+- keywords
+- canonical URL
+- OpenGraph data
+
+Title format:
+
+"Best {industry} in {area} | {site.name}"
+
+Description:
+
+Include:
+- services
+- location (area + city)
+- trust signals
+
+--------------------------------
+
+2. DYNAMIC META TAGS
+
+Update all pages:
+
+/site/[slug]
+/site/[slug]/[service]
+
+Use Next.js Head to inject:
+
+<title>
+<meta name="description">
+<meta property="og:title">
+<meta property="og:description">
+
+--------------------------------
+
+3. JSON-LD STRUCTURED DATA
+
+Create:
+
+/utils/structuredData.js
+
+Generate LocalBusiness schema:
+
+{
+ "@context": "https://schema.org",
+ "@type": "LocalBusiness",
+ "name": site.name,
+ "address": {
+   "addressLocality": site.area,
+   "addressRegion": site.city
+ },
+ "telephone": site.phone
+}
+
+Inject into page using <script type="application/ld+json">
+
+--------------------------------
+
+4. SERVICE PAGES (CRITICAL FOR SEO)
+
+Create dynamic route:
+
+/pages/site/[slug]/[service].jsx
+
+Example URL:
+
+/site/cinderella/keratin-treatment-andheri
+
+Generate page content dynamically:
+
+- service title
+- description
+- benefits
+- pricing
+- location keywords
+
+Slug format:
+
+{service-name}-{area}
+
+--------------------------------
+
+5. INTERNAL LINKING
+
+On main site page:
+
+List services with links to service pages.
+
+Example:
+
+<a href="/site/cinderella/keratin-treatment-andheri">
+
+--------------------------------
+
+6. SITEMAP GENERATION
+
+Create API route:
+
+/api/sitemap
+
+Generate sitemap including:
+
+- /site/[slug]
+- all service pages
+
+Return XML.
+
+--------------------------------
+
+7. DOMAIN-AWARE ROUTING (PHASE 2 PREP)
+
+Create:
+
+/lib/domainResolver.js
+
+Function:
+
+resolveSiteFromRequest(req)
+
+Logic:
+
+- read req.headers.host
+- if custom domain exists → map to site slug
+- else fallback to URL param slug
+
+Example:
+
+cinderellasalon.in → cinderella
+
+Do NOT implement domain DB yet, just structure code.
+
+--------------------------------
+
+8. CANONICAL URL HANDLING
+
+Set canonical URL dynamically:
+
+- if custom domain exists → use it
+- else use vercel domain
+
+--------------------------------
+
+9. LOCATION-BASED CONTENT
+
+Ensure site config includes:
+
+area
+city
+
+Render in:
+
+- headings
+- paragraphs
+- meta tags
+
+--------------------------------
+
+10. PERFORMANCE
+
+- use next/image everywhere
+- lazy load gallery
+- keep Lighthouse >90
+
+--------------------------------
+
+11. BACKWARD COMPATIBILITY
+
+Ensure:
+
+/salon/[slug] still works
+redirect internally to /site/[slug]
+
+--------------------------------
+
+12. FUTURE PREP (NO OVERBUILDING)
+
+Structure code so that later we can:
+
+- attach custom domains per site
+- auto-provision domains
+- add subdomains
+
+Do NOT implement full DNS automation.
+
+--------------------------------
+
+DELIVERABLES
+
+- SEO utility
+- structured data
+- service pages
+- sitemap API
+- domain resolver
+- updated routing
+
+Ensure:
+
+npm install
+npm run dev
+works correctly
+and deploys to Vercel.
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Prompt 2: (Image Upload, COnfig migration and storage system)
+You are a senior full-stack SaaS engineer working on a multi-tenant, multi-industry website generation platform built with:
+
+- Next.js 15
+- TailwindCSS
+- Supabase (Postgres + Storage)
+- Dynamic routing (/site/[slug])
+- Internal operator tool (/internal/create-site)
+- Database-driven config (sites.config_json)
+
+The system currently stores site configuration in Supabase but still relies on local /public folder for images.
+
+Your task is to implement a **complete image management system using Supabase Storage**, removing dependency on local filesystem and enabling fully dynamic SaaS behavior.
+
+--------------------------------
+PRIMARY OBJECTIVE
+--------------------------------
+
+Make image handling fully dynamic:
+
+Upload → Store in Supabase → Save URL in config_json → Render on site
+
+--------------------------------
+STEP 1 — SUPABASE STORAGE SETUP
+--------------------------------
+
+Use Supabase Storage.
+
+Bucket name:
+
+"sites"
+
+Folder structure:
+
+sites/{slug}/gallery/
+sites/{slug}/before-after/
+
+Ensure bucket is public.
+
+--------------------------------
+STEP 2 — STORAGE UTILITY
+--------------------------------
+
+Create:
+
+/lib/storage.js
+
+Functions:
+
+uploadImage(file, slug, folder)
+→ uploads file to Supabase storage
+→ returns public URL
+
+getPublicUrl(path)
+→ returns public URL
+
+deleteImage(path)
+→ optional future support
+
+--------------------------------
+STEP 3 — IMAGE UPLOAD API
+--------------------------------
+
+Create API route:
+
+/pages/api/internal/uploadImage.js
+
+POST endpoint.
+
+Accept:
+
+- file (multipart/form-data)
+- slug
+- folder (gallery | before-after)
+
+Process:
+
+1. validate API key (X-Internal-API-Key)
+2. upload file to Supabase storage
+3. return public URL
+
+Response:
+
+{
+  success: true,
+  url: "https://xyz.supabase.co/storage/v1/object/public/sites/slug/gallery/img.jpg"
+}
+
+--------------------------------
+STEP 4 — UPDATE SITE CONFIG WITH IMAGES
+--------------------------------
+
+Create service:
+
+/services/siteService.js
+
+Function:
+
+addImageToSiteConfig(slug, imageUrl, type)
+
+type:
+
+gallery → push into config.gallery
+before-after → push into transformations
+
+Update config_json in DB.
+
+--------------------------------
+STEP 5 — INTERNAL UI FOR IMAGE UPLOAD
+--------------------------------
+
+Enhance:
+
+/pages/internal/create-site.jsx
+
+Add:
+
+1. Gallery upload input (multiple files)
+2. Before/After upload input (pairs)
+
+UI:
+
+<input type="file" multiple />
+
+On upload:
+
+- call /api/internal/uploadImage
+- get URL
+- store temporarily in state
+
+On site creation:
+
+- include these URLs in config_json
+
+--------------------------------
+STEP 6 — EDIT SITE PAGE (VERY IMPORTANT)
+--------------------------------
+
+Create:
+
+/pages/internal/edit-site/[slug].jsx
+
+Features:
+
+- fetch existing site config
+- display current images
+- allow uploading new images
+- allow deleting images
+- update config_json
+
+--------------------------------
+STEP 7 — FRONTEND IMAGE RENDERING
+--------------------------------
+
+Ensure all components use:
+
+site.config.gallery
+site.config.transformations
+
+Images must be external URLs.
+
+Use:
+
+next/image
+
+Enable remote domains in:
+
+next.config.js
+
+--------------------------------
+STEP 8 — REMOVE LOCAL IMAGE DEPENDENCY
+--------------------------------
+
+Remove reliance on:
+
+/public/sites/
+
+Fallback:
+
+if no images → use placeholder images.
+
+--------------------------------
+STEP 9 — VALIDATION
+--------------------------------
+
+Validate:
+
+- file type (jpg, png, webp)
+- file size limit (e.g., 5MB)
+
+--------------------------------
+STEP 10 — PERFORMANCE
+--------------------------------
+
+- compress images before upload (optional)
+- lazy load images
+- use next/image optimization
+
+--------------------------------
+STEP 11 — SECURITY
+--------------------------------
+
+- protect API with INTERNAL_API_KEY
+- validate slug exists
+- prevent unauthorized uploads
+
+--------------------------------
+STEP 12 — FUTURE PREPARATION
+--------------------------------
+
+Structure must support:
+
+- drag & drop uploads
+- bulk uploads
+- CDN usage
+- image deletion
+- image ordering
+
+--------------------------------
+DELIVERABLES
+--------------------------------
+
+Provide:
+
+- storage utility
+- upload API
+- UI integration
+- config update logic
+- edit-site page
+- example usage
+
+--------------------------------
+FINAL REQUIREMENTS
+--------------------------------
+
+System must:
+
+- run with npm run dev
+- deploy on Vercel
+- allow uploading images dynamically
+- render images without using /public folder
+- support multi-tenant sites
+
+--------------------------------

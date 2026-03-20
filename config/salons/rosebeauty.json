@@ -7,6 +7,8 @@
     "description": "Eco-friendly beauty treatments using natural, premium ingredients in a serene spa environment.",
     "location": {
       "address": "789 Green Park Lane, Powai, Mumbai, 400076",
+      "area": "Powai",
+      "city": "Mumbai",
       "phone": "+91 77777 88888",
       "email": "hello@rosebeauty.com",
       "whatsapp": "+91 77777 88888",
