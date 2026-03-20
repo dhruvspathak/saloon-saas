@@ -5,8 +5,9 @@ import { useState } from 'react';
 import Lightbox from 'yet-another-react-lightbox';
 import 'yet-another-react-lightbox/styles.css';
 
-export default function GallerySection({ config }) {
-  const { gallery } = config.salon;
+export default function GallerySection({ config, industryKey = 'salon' }) {
+  const industry = config?.[industryKey] || config?.salon || {};
+  const gallery = industry.gallery || [];
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
 

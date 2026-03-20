@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
-export default function Navigation({ config }) {
+export default function Navigation({ config, suiteName = 'Our Business', industryKey = 'salon' }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -23,6 +23,11 @@ export default function Navigation({ config }) {
     { label: 'Contact', href: '#contact' },
   ];
 
+  // Extract business name and tagline from either config format or use defaults
+  const industry = config?.[industryKey] || config?.salon || {};
+  const businessName = suiteName || industry?.name || 'Our Business';
+  const businessTagline = industry?.tagline || 'Professional Services';
+
   return (
     <nav
       className={`fixed w-full z-50 transition-all duration-300 ${
@@ -38,12 +43,12 @@ export default function Navigation({ config }) {
             <h1 className={`font-serif font-bold transition-colors ${
               isScrolled ? 'text-rose-gold-dark' : 'text-white'
             }`}>
-              {config.salon.name.split("'")[0]}
+              {businessName.split("'")[0]}
             </h1>
             <p className={`text-xs transition-colors ${
               isScrolled ? 'text-gray-600' : 'text-white/80'
             }`}>
-              {config.salon.tagline}
+              {businessTagline}
             </p>
           </a>
 

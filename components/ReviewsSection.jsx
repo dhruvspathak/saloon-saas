@@ -1,5 +1,6 @@
-export default function ReviewsSection({ config }) {
-  const { reviews } = config.salon;
+export default function ReviewsSection({ config, industryKey = 'salon', googleData = null }) {
+  const industry = config?.[industryKey] || config?.salon || {};
+  const reviews = (googleData?.reviews && googleData.reviews.length > 0) ? googleData.reviews : (industry.reviews || []);
 
   const renderStars = (rating) => {
     return (
@@ -50,31 +51,35 @@ export default function ReviewsSection({ config }) {
             >
               {/* Rating Stars */}
               <div className="mb-4">
-                {renderStars(review.rating)}
+                  {renderStars(Number(review.rating || 0))}
               </div>
 
               {/* Review Text */}
               <p className="text-gray-700 font-sans mb-6 italic leading-relaxed">
-                "{review.review}"
+                "{review.review || review.text || review.comment || ''}"
               </p>
 
               {/* Service Badge */}
-              <div className="inline-block bg-rose-gold/10 text-rose-gold px-3 py-1 rounded-full text-xs font-sans font-semibold mb-4">
-                {review.service}
-              </div>
+              {(review.service || review.relative_time_description) && (
+                <div className="inline-block bg-rose-gold/10 text-rose-gold px-3 py-1 rounded-full text-xs font-sans font-semibold mb-4">
+                  {review.service || review.relative_time_description}
+                </div>
+              )}
 
               {/* Author */}
               <div className="border-t pt-4">
                 <p className="font-serif font-bold text-gray-900">
                   {review.name}
                 </p>
-                <p className="text-gray-600 font-sans text-sm">
-                  {new Date(review.date).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
-                </p>
+                {review.date && (
+                  <p className="text-gray-600 font-sans text-sm">
+                    {new Date(review.date).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </p>
+                )}
               </div>
             </div>
           ))}

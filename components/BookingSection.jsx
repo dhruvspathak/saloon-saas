@@ -10,10 +10,10 @@ import {
   validateMessage 
 } from '@/utils/validation';
 
-export default function BookingSection({ config }) {
-  const { salon } = config;
-  const { services, location } = salon;
-  const salonId = config.salon?.id || 'default';
+export default function BookingSection({ config, industryKey = 'salon' }) {
+  const industry = config?.[industryKey] || config?.salon || {};
+  const { services = [], location = {}, name } = industry;
+  const salonId = industry?.id || config?.salon?.id || 'default';
 
   const [formData, setFormData] = useState({
     name: '',
@@ -106,7 +106,7 @@ export default function BookingSection({ config }) {
       }
 
       // Also open WhatsApp after successful database submission
-      const whatsappMessage = `Hi, I've just submitted a booking request at ${salon.name}.\n\nDetails:\nName: ${validation.sanitized.name}\nService: ${validation.sanitized.service}\nPreferred Date: ${validation.sanitized.date}\n\nMessage: ${validation.sanitized.message || 'No additional message'}`;
+      const whatsappMessage = `Hi, I've just submitted a booking request at ${name}.\n\nDetails:\nName: ${validation.sanitized.name}\nService: ${validation.sanitized.service}\nPreferred Date: ${validation.sanitized.date}\n\nMessage: ${validation.sanitized.message || 'No additional message'}`;
 
       const whatsappUrl = `https://wa.me/${location.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(
         whatsappMessage

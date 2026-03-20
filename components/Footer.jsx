@@ -1,6 +1,7 @@
-export default function Footer({ config }) {
-  const { salon } = config;
-  const { location, socialLinks } = salon;
+export default function Footer({ config, industryKey = 'salon' }) {
+  const industry = config?.[industryKey] || config?.salon || {};
+  const location = industry.location || {};
+  const socialLinks = industry.socialLinks || {};
   const currentYear = new Date().getFullYear();
 
   return (
@@ -11,13 +12,13 @@ export default function Footer({ config }) {
           {/* Brand */}
           <div>
             <h3 className="font-serif text-2xl font-bold mb-3">
-              {salon.name.split("'")[0]}
+              {(industry.name || 'Our Business').split("'")[0]}
             </h3>
             <p className="text-gray-400 font-sans text-sm leading-relaxed">
-              {salon.tagline}
+              {industry.tagline}
             </p>
             <p className="text-gray-500 font-sans text-xs mt-4">
-              {salon.description}
+              {industry.description}
             </p>
           </div>
 
@@ -136,10 +137,10 @@ export default function Footer({ config }) {
         <div className="border-t border-gray-800 pt-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-400 font-sans text-sm">
             <p>
-              &copy; {currentYear} {salon.name}. All rights reserved.
+              &copy; {currentYear} {industry.name || 'Our Business'}. All rights reserved.
             </p>
             <p className="md:text-right">
-              Designed with 💖 for beauty salons
+              Designed for modern local businesses
             </p>
           </div>
         </div>

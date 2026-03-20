@@ -1,9 +1,11 @@
 /**
  * Lead Processor Service
  * Handles validation, sanitization, and storage of leads
+ * Works with generic sites table for multi-industry support
  */
 
-import { getSupabaseServerClient } from '@/lib/supabase';
+import { getSupabaseServerClient, supabase } from '@/lib/supabase';
+import { getSiteBySlug } from './siteService';
 
 /**
  * Validate Indian phone number format
@@ -53,9 +55,10 @@ export function sanitizeInput(input) {
 
 /**
  * Process and store lead in database
+ * Now supports multi-industry with site_id isolation
  *
  * @param {Object} leadData - Lead information
- * @param {string} leadData.salonId - Salon identifier
+ * @param {string} leadData.siteSlug - Site slug identifier
  * @param {string} leadData.name - Customer name
  * @param {string} leadData.phone - Customer phone
  * @param {string} [leadData.service] - Service requested
@@ -67,10 +70,10 @@ export function sanitizeInput(input) {
 export async function processLead(leadData) {
   try {
     // Validate required fields
-    if (!leadData.name || !leadData.phone || !leadData.salonId) {
+    if (!leadData.name || !leadData.phone || !leadData.siteSlug) {
       return {
         success: false,
-        error: 'Missing required fields: name, phone, salonId',
+        error: 'Missing required fields: name, phone, siteSlug',
       };
     }
 
@@ -83,30 +86,41 @@ export async function processLead(leadData) {
       };
     }
 
+    // Get site to retrieve site_id
+    const site = await getSiteBySlug(leadData.siteSlug);
+    if (!site) {
+      return {
+        success: false,
+        error: 'Site not found',
+      };
+    }
+
     // Sanitize inputs
     const sanitized = {
-      salonId: sanitizeInput(leadData.salonId),
+      site_id: site.id,
       name: sanitizeInput(leadData.name),
       phone: validatedPhone,
       service: sanitizeInput(leadData.service || ''),
-      preferredDate: leadData.preferredDate || null,
+      preferred_date: leadData.preferredDate || null,
       message: sanitizeInput(leadData.message || ''),
     };
 
-    // Store in database
-    const supabase = getSupabaseServerClient();
+    // Store in database (client-side)
+    if (!supabase) {
+      throw new Error('Supabase client not configured');
+    }
 
     const { data, error } = await supabase
       .from('leads')
       .insert([
         {
-          salon_id: sanitized.salonId,
+          site_id: sanitized.site_id,
           name: sanitized.name,
           phone: sanitized.phone,
           service: sanitized.service,
-          preferred_date: sanitized.preferredDate,
+          preferred_date: sanitized.preferred_date,
           message: sanitized.message,
-          status: 'new',
+          created_at: new Date().toISOString(),
         },
       ])
       .select()
@@ -122,7 +136,7 @@ export async function processLead(leadData) {
 
     // TODO: Add notification triggers here (WhatsApp, Email, SMS)
     // notifyAdmin(data);
-    // sendConfirmationEmail(sanitized.email);
+    // sendConfirmationSMS(sanitized.phone, site.name);
 
     return {
       success: true,
@@ -139,37 +153,117 @@ export async function processLead(leadData) {
 }
 
 /**
- * Get leads for a salon (admin use)
- * @param {string} salonId - Salon identifier
+ * Get leads for a site (admin use)
+ * Server-side only - requires service role key
+ * @param {string} siteId - Site ID (UUID)
  * @param {Object} [options] - Query options
  * @returns {Promise<Array>} Leads data
  */
-export async function getLeadsForSalon(salonId, options = {}) {
+export async function getLeadsForSite(siteId, options = {}) {
   try {
-    const supabase = getSupabaseServerClient();
+    const supabaseAdmin = getSupabaseServerClient();
 
-    let query = supabase
+    const { limit = 100, offset = 0, status = null } = options;
+
+    let query = supabaseAdmin
       .from('leads')
       .select('*')
-      .eq('salon_id', salonId)
+      .eq('site_id', siteId)
       .order('created_at', { ascending: false });
 
-    // Optional filters
-    if (options.status) {
-      query = query.eq('status', options.status);
+    if (status) {
+      query = query.eq('status', status);
     }
 
-    if (options.limit) {
-      query = query.limit(options.limit);
+    const { data, error } = await query.range(offset, offset + limit - 1);
+
+    if (error) {
+      console.error('Error fetching leads:', error);
+      return [];
     }
-
-    const { data, error } = await query;
-
-    if (error) throw error;
 
     return data || [];
   } catch (error) {
-    console.error('Error fetching leads:', error);
+    console.error('Error in getLeadsForSite:', error);
     return [];
+  }
+}
+
+/**
+ * Get leads by site slug
+ * Server-side only - requires service role key
+ * @param {string} siteSlug - Site slug
+ * @param {Object} [options] - Query options
+ * @returns {Promise<Array>} Leads data
+ */
+export async function getLeadsForSiteBySlug(siteSlug, options = {}) {
+  try {
+    const site = await getSiteBySlug(siteSlug);
+    if (!site) {
+      console.warn(`Site not found: ${siteSlug}`);
+      return [];
+    }
+
+    return getLeadsForSite(site.id, options);
+  } catch (error) {
+    console.error('Error in getLeadsForSiteBySlug:', error);
+    return [];
+  }
+}
+
+/**
+ * Mark lead as contacted
+ * Server-side only - requires service role key
+ * @param {string} leadId - Lead ID
+ * @returns {Promise<boolean>} Success status
+ */
+export async function markLeadAsContacted(leadId) {
+  try {
+    const supabaseAdmin = getSupabaseServerClient();
+
+    const { error } = await supabaseAdmin
+      .from('leads')
+      .update({ status: 'contacted', updated_at: new Date().toISOString() })
+      .eq('id', leadId);
+
+    if (error) {
+      console.error('Error updating lead:', error);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error in markLeadAsContacted:', error);
+    return false;
+  }
+}
+
+/**
+ * Delete outdated leads (older than 90 days)
+ * Server-side only - requires service role key
+ * @returns {Promise<number>} Number of deleted leads
+ */
+export async function deleteOutdatedLeads() {
+  try {
+    const supabaseAdmin = getSupabaseServerClient();
+
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
+    const { data, error } = await supabaseAdmin
+      .from('leads')
+      .delete()
+      .lt('created_at', ninetyDaysAgo.toISOString())
+      .select('id');
+
+    if (error) {
+      console.error('Error deleting old leads:', error);
+      return 0;
+    }
+
+    return data?.length || 0;
+  } catch (error) {
+    console.error('Error in deleteOutdatedLeads:', error);
+    return 0;
   }
 }

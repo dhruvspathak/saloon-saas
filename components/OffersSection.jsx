@@ -1,5 +1,6 @@
-export default function OffersSection({ config }) {
-  const { offers } = config.salon;
+export default function OffersSection({ config, industryKey = 'salon' }) {
+  const industry = config?.[industryKey] || config?.salon || {};
+  const offers = industry.offers || [];
 
   return (
     <section id="offers" className="py-20 px-4 bg-white">

@@ -1,6 +1,62 @@
-# Salon SaaS - Production Ready MVP
+# Salon SaaS - Multi-Industry Website Generation Platform
 
-A modern, fully responsive beauty salon website template with **backend-capable features** for lead management and Google reviews integration.
+A production-ready platform for generating professional business websites across multiple industries (Salons, Tattoo Studios, Clinics, Dentists, etc.) with customizable themes, layouts, and industry-specific features.
+
+**Evolved from**: Single-tenant Salon SaaS MVP → **Unified Multi-Industry Platform**
+
+## 🎯 Supported Industries
+
+- 💇‍♀️ **Beauty Salons** - Hair, makeup, wellness services
+- 🎨 **Tattoo Studios** - Artistic tattoo and piercing services
+- 🏥 **Medical Clinics** - General health and consultation services
+- 🦷 **Dental Clinics** - Dental care and cosmetic procedures
+- *Easily add more...*
+
+## 🎨 Available Themes
+
+- ✨ **Luxury** - Rose-gold, elegant serif typography
+- 🎯 **Modern** - Bold blues, contemporary design
+- ⚪ **Minimal** - Neutral, clean minimalist
+- 💚 **Elegant** - Emerald-gold sophisticated
+
+## 📐 Layout Variations
+
+- **Layout A** - Hero → Services → Gallery (Service-focused)
+- **Layout B** - Hero → Gallery → Services (Portfolio-focused)
+- **Layout C** - Hero → About → Doctors (Trust-focused)
+
+## ⚡ New Multi-Industry Features
+
+### Industry Module System
+- Pre-configured services per industry
+- Industry-specific terminology
+- Default section layouts
+- Customizable configurations
+
+### Theme System
+- Dynamic theme switching
+- Tailwind CSS integration
+- Consistent branding
+- Quick visual updates
+
+### Layout System
+- Flexible section ordering
+- Multiple page structure options
+- Industry-specific recommendations
+
+### Internal Site Generator
+- `/internal/create-site` - Protected operator tool
+- Create unlimited sites via form or API
+- One-click site deployment
+- Auto-configuration with industry defaults
+
+### Multi-Tenant Data Isolation
+- Site-specific leads tracking
+- Isolated image storage `/public/sites/{slug}/`
+- Database-driven configuration
+- Full site separation
+
+---
 
 ## ✨ Features
 
@@ -48,31 +104,102 @@ npm install
 
 # Development
 npm run dev
-
-# Production build
-npm run build
-npm start
+# Open http://localhost:3000
 ```
 
-Visit `http://localhost:3000`
+## 🌐 Creating a New Site
 
-### Setup Backend Services (Optional but Recommended)
+### Method 1: Using Internal Site Generator (Recommended)
 
-For full feature set, configure:
+1. **Navigate to Internal Tool**
+   ```
+   http://localhost:3000/internal/create-site
+   ```
 
-1. **Supabase** (for lead database)
-2. **Google Places API** (for reviews integration)
+2. **Fill in Site Details**
+   - Business Name
+   - Slug (auto-generated from name)
+   - Select Industry (Salon, Tattoo, Clinic, Dentist)
+   - Select Theme (Luxury, Modern, Minimal, Elegant)
+   - Select Layout (LayoutA, LayoutB, LayoutC)
+   - Contact information
 
-See [ENV_SETUP.md](ENV_SETUP.md) for detailed setup instructions.
+3. **Submit Form**
+   - Site created automatically
+   - Database populated with defaults
+   - Live immediately at `/site/{slug}`
 
-### Create New Salon
+### Method 2: Using API
 
-1. Edit `config/salon.json`
-2. Update all fields (name, services, gallery, etc.)
-3. Add Google `placeId` (optional, for reviews display)
-4. Add `transformations` for before/after gallery (optional)
-5. Save and refresh
-6. Deploy to Vercel
+```bash
+curl -X POST http://localhost:3000/api/internal/createSite \
+  -H "Content-Type: application/json" \
+  -H "X-Internal-API-Key: your-secret-key" \
+  -d '{
+    "businessName": "Beauty Studio",
+    "slug": "beauty-studio",
+    "industry": "salon",
+    "theme": "luxury",
+    "layout": "layoutA",
+    "phone": "+91 99679 36773",
+    "whatsapp": "+91 98765 43210",
+    "address": "123 Main St, City",
+    "googlePlaceId": "optional-google-id"
+  }'
+```
+
+### Method 3: Legacy (File-Based)
+
+1. Create config: `/config/salons/my-salon.json`
+2. Follow existing config structure
+3. Access at `/salon/my-salon`
+
+## 📚 Architecture
+
+For detailed architecture including:
+- Industry modules
+- Theme system
+- Layout system
+- Database schema
+- Adding new industries/themes
+- Performance optimization
+
+See: [ARCHITECTURE.md](./ARCHITECTURE.md)
+
+## 🗄️ Database Setup
+
+### Create Tables
+
+```sql
+-- Sites table (multi-industry)
+CREATE TABLE sites (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  slug TEXT UNIQUE NOT NULL,
+  name TEXT NOT NULL,
+  industry TEXT NOT NULL,
+  theme TEXT NOT NULL,
+  layout TEXT NOT NULL,
+  config_json JSONB,
+  created_at TIMESTAMP DEFAULT now()
+);
+
+-- Leads table (multi-tenant)
+CREATE TABLE leads (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  site_id UUID NOT NULL REFERENCES sites(id),
+  name TEXT NOT NULL,
+  phone TEXT NOT NULL,
+  service TEXT,
+  preferred_date DATE,
+  message TEXT,
+  created_at TIMESTAMP DEFAULT now()
+);
+
+CREATE INDEX idx_leads_site_id ON leads(site_id);
+CREATE INDEX idx_sites_slug ON sites(slug);
+```
+
+---
 
 ## 🎫 Booking Form with Validation
 
@@ -102,15 +229,36 @@ The "Book your Appointment" form includes **real-time validation and security**:
 ## 📊 Visitor Analytics
 
 Vercel Analytics is pre-configured and automatically tracks page views when deployed. Deploy to Vercel → Visit your site → Monitor on Vercel dashboard. See [Vercel Analytics docs](https://vercel.com/docs/analytics) for details.
+
+## 🔧 Environment Configuration
+
+### Required for Multi-Industry Features
+```env
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# Internal Site Creation (Security)
+INTERNAL_API_KEY=your-secret-key-here
+NEXT_PUBLIC_INTERNAL_ACCESS_KEY=optional-public-key
+```
+
+See [ENV_SETUP.md](ENV_SETUP.md) for complete setup.
+
 ## 🚀 Recent Updates
 
-### March 2026 Release
-- ✅ **Security**: Upgraded to Next.js 15.5.10 (fixed CVE in Next.js 14.2.35)
-- ✅ **Form Validation**: Added comprehensive regex & XSS protection to booking form
-- ✅ **Analytics**: Integrated Vercel Analytics for visitor tracking
-- ✅ **Performance**: Fixed Next.js 15 warnings (stylesheets, image quality)
-- ✅ **Accessibility**: Real-time validation feedback with field-level error messages
-- ✅ **Data Security**: All form inputs sanitized before API submission
+### March 2026 - Multi-Industry Platform Release
+- ✅ **Industry Modules**: Pre-configured services for Salons, Tattoo, Clinic, Dentist
+- ✅ **Theme System**: Luxury, Modern, Minimal, Elegant themes with Tailwind integration
+- ✅ **Layout Variations**: 3 layout options (Service-focused, Portfolio-focused, Trust-focused)
+- ✅ **Internal Site Generator**: `/internal/create-site` form for one-click site creation
+- ✅ **Database-Driven**: Moved from config files to supabase `sites` table
+- ✅ **Multi-Tenant Leads**: Site-isolated lead tracking via `site_id` foreign key
+- ✅ **Image Isolation**: Per-site image directories `/public/sites/{slug}/`
+- ✅ **Backward Compatibility**: Old `/salon/[slug]` routes still work with migration support
+
+### Previous - March 2026 Release
 ## �📋 Configuration
 
 ### Minimal Config
