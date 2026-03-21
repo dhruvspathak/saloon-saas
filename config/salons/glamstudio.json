@@ -7,6 +7,8 @@
     "description": "Trendy beauty studio offering cutting-edge services for the modern Indian woman.",
     "location": {
       "address": "456 Luxury Mall, Bandra West, Mumbai, 400050",
+      "area": "Bandra West",
+      "city": "Mumbai",
       "phone": "+91 88888 99999",
       "email": "info@glamstudio.com",
       "whatsapp": "+91 88888 99999",

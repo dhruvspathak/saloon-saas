@@ -151,6 +151,27 @@ export default async function handler(req, res) {
       seed: normalizedSlug,
     });
 
+    const industryKey = config_json.salon?.industry || config_json.site?.industry || 'salon';
+    const targetObj = config_json[industryKey] || config_json.salon || config_json;
+
+    if (req.body.galleryImages && Array.isArray(req.body.galleryImages)) {
+      targetObj.gallery = req.body.galleryImages.map((img, i) => ({
+        id: i + 1,
+        image: img,
+        title: `Gallery Image ${i + 1}`,
+        category: 'General'
+      }));
+    }
+
+    if (req.body.beforeAfterImages && Array.isArray(req.body.beforeAfterImages)) {
+      const validPairs = req.body.beforeAfterImages.filter(pair => pair.before || pair.after);
+      config_json.transformations = validPairs.map((pair, i) => ({
+        title: pair.title || `Transformation ${i + 1}`,
+        before: pair.before,
+        after: pair.after
+      }));
+    }
+
     // Create site
     const newSite = await createSite({
       name: businessName,

@@ -34,6 +34,8 @@ export default function CreateSitePage() {
     whatsapp: '',
     address: '',
     googlePlaceId: '',
+    galleryImages: [],
+    beforeAfterImages: [{ before: '', after: '' }],
   });
 
   const [availableIndustries, setAvailableIndustries] = useState([]);
@@ -139,6 +141,59 @@ export default function CreateSitePage() {
     applySmartDefaults();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.industry]);
+
+  /**
+   * Handle dynamic file uploads
+   */
+  const handleImageUpload = async (e, folderType, pairIndex, pairType) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    setLoading(true);
+    const uploadedUrls = [];
+    const slug = formData.slug || 'temp-draft';
+    
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const payload = new FormData();
+        payload.append('file', file);
+        payload.append('slug', slug);
+        payload.append('folder', folderType);
+
+        const apiKey = process.env.NEXT_PUBLIC_INTERNAL_API_KEY || localStorage.getItem('internalAccessKey');
+
+        try {
+            const res = await fetch('/api/internal/uploadImage', {
+                method: 'POST',
+                headers: {
+                    'x-internal-api-key': apiKey
+                },
+                body: payload
+            });
+            const data = await res.json();
+            if (data.success) {
+                uploadedUrls.push(data.url);
+            } else {
+                setError(data.error);
+            }
+        } catch (err) {
+            console.error('Upload Error', err);
+            setError('Upload failed');
+        }
+    }
+    
+    if (folderType === 'gallery') {
+       setFormData(prev => ({ ...prev, galleryImages: [...(prev.galleryImages || []), ...uploadedUrls] }));
+    } else if (folderType === 'before-after') {
+       setFormData(prev => {
+          const pairs = [...(prev.beforeAfterImages || [])];
+          if (!pairs[pairIndex]) pairs[pairIndex] = { title: `Transformation ${pairIndex+1}`, before: '', after: '' };
+          pairs[pairIndex][pairType] = uploadedUrls[0];
+          return { ...prev, beforeAfterImages: pairs };
+       });
+    }
+    setLoading(false);
+  };
 
   /**
    * Handle form submission
@@ -453,6 +508,67 @@ export default function CreateSitePage() {
                 className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                 placeholder="Google Maps Place ID for reviews"
               />
+            </div>
+
+            {/* Gallery Upload */}
+            <div className="pt-4 border-t">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Upload Gallery Images
+              </label>
+              <input 
+                 type="file" 
+                 multiple 
+                 accept="image/jpeg, image/png, image/webp"
+                 onChange={(e) => handleImageUpload(e, 'gallery')}
+                 className="mb-2"
+              />
+              <div className="flex gap-2 flex-wrap">
+                  {formData.galleryImages?.map((url, i) => (
+                      <img key={i} src={url} alt="Gallery item" className="w-16 h-16 object-cover rounded shadow" />
+                  ))}
+              </div>
+            </div>
+
+            {/* Before / After Pair Upload */}
+            <div className="pt-4 border-t">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Transformations (Before & After)
+              </label>
+              {formData.beforeAfterImages?.map((pair, index) => (
+                <div key={index} className="flex gap-4 mb-4 items-center bg-gray-50 p-4 rounded">
+                    <div>
+                        <p className="text-xs mb-1">Before Picture</p>
+                        {pair.before ? (
+                             <img src={pair.before} alt="Before" className="w-16 h-16 object-cover rounded shadow mb-2" />
+                        ) : null}
+                        <input 
+                           type="file" 
+                           accept="image/jpeg, image/png, image/webp"
+                           onChange={(e) => handleImageUpload(e, 'before-after', index, 'before')} 
+                           className="text-xs"
+                        />
+                    </div>
+                    <div>
+                        <p className="text-xs mb-1">After Picture</p>
+                        {pair.after ? (
+                             <img src={pair.after} alt="After" className="w-16 h-16 object-cover rounded shadow mb-2" />
+                        ) : null}
+                        <input 
+                           type="file" 
+                           accept="image/jpeg, image/png, image/webp"
+                           onChange={(e) => handleImageUpload(e, 'before-after', index, 'after')} 
+                           className="text-xs"
+                        />
+                    </div>
+                </div>
+              ))}
+              <button 
+                type="button" 
+                onClick={() => setFormData(prev => ({ ...prev, beforeAfterImages: [...prev.beforeAfterImages, { before: '', after: '' }] }))}
+                className="text-xs bg-gray-200 px-3 py-1 rounded hover:bg-gray-300"
+              >
+                + Add Another Pair
+              </button>
             </div>
 
             {/* Submit Button */}

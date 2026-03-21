@@ -305,6 +305,48 @@ export async function deleteSite(slug) {
   }
 }
 
+/**
+ * Add an image URL to the site configuration
+ * @param {string} slug - Site slug
+ * @param {string} imageUrl - Public Supabase URL
+ * @param {string} type - 'gallery' or 'before-after'
+ * @returns {object|null} Updated site config or null
+ */
+export async function addImageToSiteConfig(slug, imageUrl, type) {
+  try {
+    const siteObj = await getSiteConfigBySlug(slug);
+    if (!siteObj) throw new Error(`Site not found: ${slug}`);
+
+    const config = siteObj.configData;
+    const industryKey = config.salon?.industry || config.site?.industry || 'salon';
+    const targetObj = config[industryKey] || config.salon || config;
+
+    if (type === 'gallery') {
+      const currentGallery = targetObj.gallery || [];
+      const newId = currentGallery.length ? Math.max(...currentGallery.map(g => g.id)) + 1 : 1;
+      targetObj.gallery = [
+        ...currentGallery,
+        { id: newId, image: imageUrl, title: 'Uploaded Gallery Image', category: 'General' }
+      ];
+    } else if (type === 'before-after') {
+      const currentTrans = config.transformations || [];
+      // Appends an incomplete pair; intended to be completed by UI logic or handles single pushes if pairs are packed beforehand
+      config.transformations = [
+        ...currentTrans,
+        { title: 'Uploaded Transformation', before: imageUrl, after: imageUrl }
+      ];
+    }
+
+    if (config[industryKey]) config[industryKey] = targetObj;
+    else if (config.salon) config.salon = targetObj;
+
+    return await updateSiteConfig(slug, config);
+  } catch (error) {
+    console.error('Error in addImageToSiteConfig:', error);
+    return null;
+  }
+}
+
 export default {
   getSiteBySlug,
   getSiteConfigBySlug,
@@ -313,4 +355,5 @@ export default {
   updateSite,
   updateSiteConfig,
   deleteSite,
+  addImageToSiteConfig,
 };

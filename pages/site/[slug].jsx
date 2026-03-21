@@ -4,8 +4,9 @@ import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import SectionRenderer from '@/components/SectionRenderer';
 import Footer from '@/components/Footer';
-
-import { getSiteConfigBySlug } from '@/services/siteService';
+import { buildSEO } from '@/utils/seoBuilder';
+import { generateLocalBusinessSchema } from '@/utils/structuredData';
+import { loadSalonConfig } from '@/lib/loadSalonConfig';
 import { getLayout } from '@/layouts';
 import { getTheme } from '@/themes';
 import { getIndustryModule } from '@/industries';
@@ -23,7 +24,7 @@ import { fetchGoogleReviews } from '@/services/googleReviews';
  * - Google Reviews integration
  * - Responsive design support
  */
-export default function SitePage({ siteConfig, googleData, layout, theme, industry }) {
+export default function SitePage({ site, googleData, layout, theme, industry, seo, structuredData }) {
   const router = useRouter();
 
   // Handle loading state
@@ -39,7 +40,7 @@ export default function SitePage({ siteConfig, googleData, layout, theme, indust
   }
 
   // Handle 404
-  if (!siteConfig) {
+  if (!site) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -56,9 +57,7 @@ export default function SitePage({ siteConfig, googleData, layout, theme, indust
     );
   }
 
-  const config = siteConfig.configData || {};
-  const siteInfo = config.site || {};
-  const industryKey = (siteConfig.industry || siteInfo.industry || 'salon').toLowerCase();
+  const industryKey = (site.industry || 'salon').toLowerCase();
 
   // Apply theme CSS variables
   const themeCSSVariables = {
@@ -75,25 +74,54 @@ export default function SitePage({ siteConfig, googleData, layout, theme, indust
   return (
     <>
       <Head>
-        <title>{siteInfo.name} | Professional Services</title>
-        <meta name="description" content={siteInfo.description || `Visit ${siteInfo.name}`} />
+        <title>{seo.title}</title>
+        <meta name="description" content={seo.description} />
+        <meta name="keywords" content={seo.keywords} />
+        <link rel="canonical" href={seo.canonical} />
+        <meta property="og:title" content={seo['og:title']} />
+        <meta property="og:description" content={seo['og:description']} />
+        <meta property="og:type" content={seo['og:type']} />
+        <meta property="og:url" content={seo['og:url']} />
+        <meta property="og:image" content={seo['og:image']} />
+        <meta property="og:site_name" content={seo['og:site_name']} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
       <div style={themeCSSVariables} className={`theme-${theme.name}`}>
-        <Navigation config={config} suiteName={siteInfo.name} industryKey={industryKey} />
+        <Navigation config={{ site }} suiteName={site.name} industryKey={industryKey} />
 
         <main className="bg-white">
           <SectionRenderer
             layout={layout}
-            config={config}
+            config={{ salon: site }}
             industryKey={industryKey}
             googleData={googleData}
           />
+          <div className="container mx-auto px-4 py-8">
+            <h2 className="text-3xl font-bold text-center mb-8">Our Services</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {site.services.map(service => {
+                const serviceSlug = `${service.name.toLowerCase().replace(/ /g, '-')}-${site.location.area.toLowerCase().replace(/ /g, '-')}`;
+                return (
+                  <div key={service.id} className="border p-4 rounded-lg">
+                    <h3 className="text-xl font-bold">{service.name}</h3>
+                    <p>{service.description}</p>
+                    <Link href={`/site/${site.slug}/${serviceSlug}`} className="text-blue-500 hover:underline">
+                      Learn More
+                    </Link>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </main>
 
-        <Footer config={config} industryKey={industryKey} />
+        <Footer config={{ site }} industryKey={industryKey} />
       </div>
 
       <style jsx global>{`
@@ -174,50 +202,37 @@ export default function SitePage({ siteConfig, googleData, layout, theme, indust
 }
 
 /**
- * Get static paths for all sites
- * Pre-renders all site pages at build time
+ * Get server-side props for each site
+ * Fetches site configuration dynamically and resolves custom domains.
  */
-export async function getStaticPaths() {
+export async function getServerSideProps({ req, query, res }) {
+  // Set caching headers for performance equivalent to ISR locally (Vercel Edge Cache)
+  res.setHeader(
+    'Cache-Control',
+    'public, s-maxage=3600, stale-while-revalidate=86400'
+  );
+
   try {
-    // In production, you would fetch all sites from the database
-    // For now, returning empty array for ISR (Incremental Static Regeneration)
-    return {
-      paths: [],
-      fallback: 'blocking', // Use ISR: render on-demand and cache
-    };
-  } catch (error) {
-    console.error('Error in getStaticPaths:', error);
-    return {
-      paths: [],
-      fallback: 'blocking',
-    };
-  }
-}
+    // Import resolver here if needed, or rely on top level import
+    const { resolveSiteFromRequest } = require('@/lib/domainResolver');
+    const resolvedSlug = resolveSiteFromRequest(req);
+    const slug = resolvedSlug || query.slug;
 
-/**
- * Get static props for each site
- * Fetches site configuration and metadata
- */
-export async function getStaticProps({ params }) {
-  try {
-    const { slug } = params;
+    // Load site configuration from local JSON
+    const siteData = loadSalonConfig(slug);
 
-    // Fetch site configuration from database
-    const siteConfig = await getSiteConfigBySlug(slug);
-
-    if (!siteConfig) {
+    if (!siteData || !siteData.salon) {
       return {
         notFound: true,
-        revalidate: 3600, // Revalidate every hour
       };
     }
 
-    const config = siteConfig.configData || {};
+    const site = siteData.salon;
 
     // Get layout, theme, and industry configuration
-    const layoutName = siteConfig.layout || config?.site?.layout || 'layoutA';
-    const themeName = siteConfig.theme || config?.site?.theme || 'luxury';
-    const industryName = siteConfig.industry || config?.site?.industry || 'salon';
+    const layoutName = site.layout || 'layoutA';
+    const themeName = site.theme || 'luxury';
+    const industryName = site.industry || 'salon';
 
     const layout = getLayout(layoutName);
     const theme = getTheme(themeName);
@@ -226,7 +241,7 @@ export async function getStaticProps({ params }) {
     // Fetch Google Reviews if googlePlaceId exists
     let googleData = null;
     try {
-      const googlePlaceId = config.location?.googlePlaceId;
+      const googlePlaceId = site.location?.googlePlaceId;
       if (googlePlaceId) {
         googleData = await fetchGoogleReviews(googlePlaceId);
       }
@@ -234,21 +249,31 @@ export async function getStaticProps({ params }) {
       console.warn('Error fetching Google reviews:', error);
     }
 
+    // Build canonical URL dynamically based on the request host
+    const host = req.headers.host || process.env.NEXT_PUBLIC_VERCEL_URL || 'localhost:3000';
+    const protocol = host.includes('localhost') ? 'http' : 'https';
+    const basePath = resolvedSlug ? '' : `/site/${slug}`;
+    const canonicalUrl = `${protocol}://${host}${basePath}`;
+
+    const seo = buildSEO(site, canonicalUrl);
+    const structuredData = generateLocalBusinessSchema(site);
+
     return {
       props: {
-        siteConfig,
+        site,
         googleData,
         layout,
         theme,
         industry,
+        seo,
+        structuredData,
+        canonicalUrl,
       },
-      revalidate: 3600, // ISR: Revalidate every hour
     };
   } catch (error) {
-    console.error('Error in getStaticProps:', error);
+    console.error('Error in getServerSideProps:', error);
     return {
       notFound: true,
-      revalidate: 3600,
     };
   }
 }
